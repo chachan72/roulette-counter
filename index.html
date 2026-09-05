@@ -144,7 +144,7 @@
   .spin-label{font-size:16px;letter-spacing:.04em}
   .spin-value{min-width:34px;font-size:25px;line-height:1;font-weight:900}
   .spin-value.red{color:#ff5656}.spin-value.black{color:#fff}.spin-value.green{color:#56e676}
-  .board-spin{grid-column:1;grid-row:4 / span 2;width:100%;height:100%;min-width:0!important;padding:0!important;border:1.8px solid var(--gold)!important;border-radius:0!important;background:linear-gradient(180deg,#115c24,#0b4219)!important;color:#06283a;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .board-spin{grid-column:1;grid-row:4;width:100%;height:100%;min-width:0!important;padding:0!important;border:1.8px solid var(--gold)!important;border-radius:0!important;background:linear-gradient(180deg,#115c24,#0b4219)!important;color:#06283a;display:flex;align-items:center;justify-content:center;cursor:pointer}
   .spin-circle{width:76px;height:76px;border-radius:999px;background:#70c9f4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:#000;box-shadow:0 0 0 1px rgba(255,255,255,.25) inset}
   .board-spin .spin-label{font-size:13px;font-weight:900;color:#000}
   .board-spin .spin-value{font-size:25px;color:#000!important;font-weight:900}
@@ -501,25 +501,277 @@
 .strategy-bet-box strong{font-size:16px!important;}
 .pnl-reset-dot{width:16px;height:16px;min-width:16px;padding:0;border-radius:50%;border:1px solid rgba(255,255,255,.55);background:#777;cursor:pointer;box-shadow:none;margin-left:-3px;}
 .pnl-reset-dot:active{transform:scale(.9);background:#aaa;}
+
+/* v24 Mac quick controls: compact boxes below SPIN, immediately left of Last */
+@media (min-width:900px){
+  #spinBtn.board-spin{grid-column:1 !important;grid-row:4 / span 2 !important;}
+  #spinActions{display:none !important;}
+  .chips-row{justify-content:flex-start !important;}
+  .quick-control{
+    height:38px !important; min-width:82px !important; padding:0 11px !important;
+    border:1px solid rgba(255,255,255,.28) !important; border-radius:10px !important;
+    color:#fff !important; font-family:Arial,Helvetica,sans-serif !important;
+    font-size:13px !important; font-weight:800 !important; line-height:1 !important;
+    cursor:pointer !important; box-shadow:none !important;
+  }
+  .quick-clear{background:#a91515 !important;}
+  .quick-double{background:#1f6f9f !important;}
+  .quick-lastbet{background:#6b4aa5 !important;}
+  .quick-lastbet.active{background:#b27a19 !important; outline:2px solid #f4d35e !important;}
+  .last-result-inline{height:38px !important;min-width:105px !important;padding:0 11px !important;border-radius:10px !important;background:#2b2b2b !important;border:1px solid rgba(255,255,255,.28) !important;}
+}
+
+
+/* v32: subtle click feedback ONLY for Clear, Double, Last Bet and Spin */
+#quickClearBtn, #quickDoubleBtn, #lastBetModeBtn, #spinBtn {
+  -webkit-tap-highlight-color: transparent;
+  transition: filter .08s ease, box-shadow .08s ease, opacity .08s ease !important;
+}
+#quickClearBtn:active, #quickDoubleBtn:active, #lastBetModeBtn:active, #spinBtn:active {
+  filter: brightness(1.18) !important;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.42) !important;
+}
+.click-flash {
+  animation: clickFlash .16s ease-out !important;
+}
+@keyframes clickFlash {
+  0% { filter:brightness(1.22); box-shadow:inset 0 0 0 2px rgba(255,255,255,.48), 0 0 5px rgba(255,255,255,.18); }
+  100% { filter:brightness(1); box-shadow:none; }
+}
+
 </style>
+
+<style>
+/* Mac desktop layout: preserve all logic, enlarge the existing interface */
+@media (min-width: 900px){
+  body{font-size:18px;}
+  .wrap{max-width:1500px !important; width:96vw !important; margin:18px auto !important;}
+  button,input{font-size:16px !important;}
+  .cell,.num,.zero,.dozen,.outside,.rowbet{min-height:58px !important;}
+  .bet-chip{font-size:15px !important; padding:3px 7px !important;}
+  .count{font-size:18px !important;}
+  .history-ball{width:34px !important;height:34px !important;font-size:14px !important;}
+}
+
+/* v24 Mac quick controls: compact boxes below SPIN, immediately left of Last */
+@media (min-width:900px){
+  #spinBtn.board-spin{grid-column:1 !important;grid-row:4 / span 2 !important;}
+  #spinActions{display:none !important;}
+  .chips-row{justify-content:flex-start !important;}
+  .quick-control{
+    height:38px !important; min-width:82px !important; padding:0 11px !important;
+    border:1px solid rgba(255,255,255,.28) !important; border-radius:10px !important;
+    color:#fff !important; font-family:Arial,Helvetica,sans-serif !important;
+    font-size:13px !important; font-weight:800 !important; line-height:1 !important;
+    cursor:pointer !important; box-shadow:none !important;
+  }
+  .quick-clear{background:#a91515 !important;}
+  .quick-double{background:#1f6f9f !important;}
+  .quick-lastbet{background:#6b4aa5 !important;}
+  .quick-lastbet.active{background:#b27a19 !important; outline:2px solid #f4d35e !important;}
+  .last-result-inline{height:38px !important;min-width:105px !important;padding:0 11px !important;border-radius:10px !important;background:#2b2b2b !important;border:1px solid rgba(255,255,255,.28) !important;}
+}
+
+</style>
+
+<style>
+/* v19 Mac FULL SCREEN: use essentially the entire browser viewport */
+@media (min-width: 900px){
+  html,body{width:100%;min-height:100%;}
+  body{zoom:1 !important; overflow-x:hidden;}
+  .wrap{max-width:none !important;width:100vw !important;margin:0 !important;padding:10px 14px 8px !important;}
+  .top{margin-bottom:8px !important;}
+  .pnl-mini input{width:82px !important;min-width:82px !important;}
+  .board-wrap{width:100% !important;padding:12px !important;border-radius:20px !important;}
+  .board{width:100% !important;grid-template-columns:120px repeat(12,minmax(0,1fr)) 84px !important;grid-template-rows:clamp(100px,14vh,145px) clamp(100px,14vh,145px) clamp(100px,14vh,145px) clamp(90px,12vh,125px) clamp(80px,11vh,112px) !important;}
+  .num{font-size:clamp(34px,2.6vw,48px) !important;}
+  .num.red .main,.num.black .main{width:clamp(66px,5.2vw,88px) !important;height:clamp(66px,5.2vw,88px) !important;}
+  .zero .main{width:clamp(76px,5.8vw,96px) !important;height:clamp(76px,5.8vw,96px) !important;font-size:clamp(36px,2.8vw,50px) !important;}
+  .small-count,.outside-zone .small-count{font-size:clamp(19px,1.45vw,26px) !important;}
+  .zone-count{font-size:clamp(28px,2.2vw,40px) !important;}
+  .bet-chip{font-size:clamp(15px,1.15vw,20px) !important;padding:4px 8px !important;}
+  .history{width:100% !important;justify-content:center !important;}
+}
+
+/* v24 Mac quick controls: compact boxes below SPIN, immediately left of Last */
+@media (min-width:900px){
+  #spinBtn.board-spin{grid-column:1 !important;grid-row:4 / span 2 !important;}
+  #spinActions{display:none !important;}
+  .chips-row{justify-content:flex-start !important;}
+  .quick-control{
+    height:38px !important; min-width:82px !important; padding:0 11px !important;
+    border:1px solid rgba(255,255,255,.28) !important; border-radius:10px !important;
+    color:#fff !important; font-family:Arial,Helvetica,sans-serif !important;
+    font-size:13px !important; font-weight:800 !important; line-height:1 !important;
+    cursor:pointer !important; box-shadow:none !important;
+  }
+  .quick-clear{background:#a91515 !important;}
+  .quick-double{background:#1f6f9f !important;}
+  .quick-lastbet{background:#6b4aa5 !important;}
+  .quick-lastbet.active{background:#b27a19 !important; outline:2px solid #f4d35e !important;}
+  .last-result-inline{height:38px !important;min-width:105px !important;padding:0 11px !important;border-radius:10px !important;background:#2b2b2b !important;border:1px solid rgba(255,255,255,.28) !important;}
+}
+
+</style>
+
+<style>
+/* v23 Mac: DOBLAR + LIMPIAR directly below SPIN, together using the same total width */
+@media (min-width: 900px){
+  #spinBtn.board-spin{grid-column:1 !important;grid-row:4 !important;width:100% !important;height:100% !important;}
+  #spinActions.board-spin-actions{grid-column:1 !important;grid-row:5 !important;width:100% !important;height:100% !important;display:grid !important;grid-template-columns:1fr 1fr !important;gap:0 !important;min-width:0 !important;}
+  #spinActions .board-action{width:100% !important;height:100% !important;min-width:0 !important;margin:0 !important;padding:0 4px !important;border:1.8px solid var(--gold) !important;border-radius:0 !important;background:linear-gradient(180deg,#115c24,#0b4219) !important;color:#fff !important;font-size:clamp(13px,1vw,18px) !important;font-weight:900 !important;display:flex !important;align-items:center !important;justify-content:center !important;cursor:pointer !important;}
+  #spinActions #clearBoardBtn{border-left-width:0 !important;}
+}
+
+/* v24 Mac quick controls: compact boxes below SPIN, immediately left of Last */
+@media (min-width:900px){
+  #spinBtn.board-spin{grid-column:1 !important;grid-row:4 / span 2 !important;}
+  #spinActions{display:none !important;}
+  .chips-row{justify-content:flex-start !important;}
+  .quick-control{
+    height:38px !important; min-width:82px !important; padding:0 11px !important;
+    border:1px solid rgba(255,255,255,.28) !important; border-radius:10px !important;
+    color:#fff !important; font-family:Arial,Helvetica,sans-serif !important;
+    font-size:13px !important; font-weight:800 !important; line-height:1 !important;
+    cursor:pointer !important; box-shadow:none !important;
+  }
+  .quick-clear{background:#a91515 !important;}
+  .quick-double{background:#1f6f9f !important;}
+  .quick-lastbet{background:#6b4aa5 !important;}
+  .quick-lastbet.active{background:#b27a19 !important; outline:2px solid #f4d35e !important;}
+  .last-result-inline{height:38px !important;min-width:105px !important;padding:0 11px !important;border-radius:10px !important;background:#2b2b2b !important;border:1px solid rgba(255,255,255,.28) !important;}
+}
+
+</style>
+
+<style>
+/* v29 VISUAL-ONLY: built directly from v27. Strategy/betting JavaScript untouched. */
+@media (min-width:900px){
+  .pnl-mini-label:first-child{
+    background:#176b3a !important;
+    border:1px solid rgba(255,255,255,.32) !important;
+    border-radius:10px !important;
+    padding:5px 8px !important;
+  }
+  .pnl-mini-label:first-child input{
+    background:#0d2619 !important;
+    border-color:rgba(255,255,255,.28) !important;
+  }
+  .pnl-mini-label[title="Loss since last win"]{
+    background:#8a4b12 !important;
+    border:1px solid rgba(255,255,255,.32) !important;
+    border-radius:10px !important;
+    padding:5px 8px !important;
+  }
+  .pnl-mini-label[title="Loss since last win"] .pnl-readonly{
+    background:#25170b !important;
+    border-color:rgba(255,255,255,.28) !important;
+  }
+  .history-line{
+    display:grid !important;
+    grid-template-columns:1fr 76px !important;
+    align-items:center !important;
+    gap:10px !important;
+    width:100% !important;
+    margin-top:4px !important;
+  }
+  .history-line #history.history{
+    width:100% !important; min-width:0 !important;
+    justify-content:flex-end !important; margin:0 !important;
+  }
+  .bet-circle{
+    width:72px !important; height:72px !important; border-radius:50% !important;
+    background:#8b3fc2 !important; border:2px solid rgba(255,255,255,.5) !important;
+    display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important;
+    color:#fff !important; font-family:Arial,Helvetica,sans-serif !important; line-height:1 !important;
+    box-shadow:0 2px 8px rgba(0,0,0,.35) !important; flex:none !important;
+  }
+  .bet-circle span{font-size:12px !important;font-weight:800 !important;text-transform:uppercase !important;margin-bottom:4px !important;}
+  .bet-circle strong{font-size:19px !important;font-weight:900 !important;max-width:64px !important;overflow:hidden !important;text-overflow:ellipsis !important;}
+}
+
+/* v30 VISUAL ONLY: BET moved into the empty right-hand board rectangle (column 14, rows 4-5). */
+@media (min-width:900px){
+  .history-line{display:block !important;width:100% !important;margin-top:4px !important;}
+  .history-line #history.history{width:100% !important;justify-content:center !important;margin:0 !important;}
+  .board-bet-slot{
+    grid-column:14 !important; grid-row:4 / span 2 !important;
+    border:1.8px solid var(--gold) !important;
+    background:linear-gradient(180deg,#115c24,#0b4219) !important;
+    display:flex !important;align-items:center !important;justify-content:center !important;
+    min-width:0 !important;overflow:hidden !important;
+  }
+  .board-bet-slot .bet-circle{
+    width:72px !important;height:72px !important;margin:0 !important;
+  }
+}
+</style>
+
+
+<style>
+/* v39 iPhone landscape shell — visual only. Strategy/betting JS unchanged. */
+@media (max-width:1100px){
+  html,body{margin:0!important;padding:0!important;background:#000!important;min-height:0!important;}
+  body{zoom:.58!important;overflow-x:hidden!important;}
+  .wrap{width:1450px!important;max-width:none!important;margin:0!important;padding:6px 8px 4px!important;}
+  .top{margin:0 0 4px!important;}
+  .controls{gap:6px!important;flex-wrap:nowrap!important;}
+  .mini-control{height:38px!important;padding:0 11px!important;border-radius:10px!important;font-size:13px!important;}
+  .pnl-mini{margin-left:0!important;gap:5px!important;flex-wrap:nowrap!important;}
+  .pnl-mini-label{height:38px!important;padding:0 8px!important;border-radius:10px!important;font-size:12px!important;gap:5px!important;}
+  .pnl-mini input{width:68px!important;min-width:68px!important;height:28px!important;font-size:14px!important;padding:0 5px!important;}
+  .pnl-readonly{width:62px!important;height:28px!important;font-size:14px!important;}
+  .pnl-reset-dot{width:15px!important;height:15px!important;min-width:15px!important;}
+
+  .board-wrap{width:100%!important;padding:7px!important;margin:0!important;border-radius:20px!important;}
+  .board{width:100%!important;grid-template-columns:110px repeat(12,minmax(0,1fr)) 82px!important;grid-template-rows:92px 92px 92px 96px 84px!important;}
+  .num{font-size:34px!important;}
+  .num.red .main,.num.black .main{width:68px!important;height:68px!important;}
+  .zero .main{width:76px!important;height:76px!important;font-size:38px!important;}
+  .zone-count{font-size:42px!important;}
+  .small-count,.outside-zone .small-count{font-size:18px!important;}
+  .spin-circle{width:76px!important;height:76px!important;}
+  .board-spin .spin-label{font-size:13px!important;}
+  .board-spin .spin-value{font-size:25px!important;}
+
+  .board-bet-slot{grid-column:14!important;grid-row:4 / span 2!important;border:1.8px solid var(--gold)!important;background:linear-gradient(180deg,#115c24,#0b4219)!important;display:flex!important;align-items:center!important;justify-content:center!important;min-width:0!important;overflow:hidden!important;}
+  .board-bet-slot .bet-circle{width:72px!important;height:72px!important;border-radius:50%!important;background:#8b3fc2!important;border:2px solid rgba(255,255,255,.5)!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;color:#fff!important;font-family:Arial,Helvetica,sans-serif!important;line-height:1!important;box-shadow:0 2px 8px rgba(0,0,0,.35)!important;}
+  .board-bet-slot .bet-circle span{font-size:12px!important;font-weight:800!important;text-transform:uppercase!important;margin-bottom:4px!important;}
+  .board-bet-slot .bet-circle strong{font-size:19px!important;font-weight:900!important;}
+
+  .chips-row{width:100%!important;margin:5px 0 0!important;gap:4px!important;flex-wrap:nowrap!important;justify-content:flex-start!important;}
+  .quick-control{height:34px!important;min-width:78px!important;padding:0 9px!important;border:1px solid rgba(255,255,255,.28)!important;border-radius:9px!important;color:#fff!important;font-family:Arial,Helvetica,sans-serif!important;font-size:12px!important;font-weight:800!important;cursor:pointer!important;}
+  .quick-clear{background:#a91515!important;}
+  .quick-double{background:#1f6f9f!important;}
+  .quick-lastbet{background:#6b4aa5!important;}
+  .quick-lastbet.active{background:#b27a19!important;outline:2px solid #f4d35e!important;}
+  .last-result-inline{height:34px!important;min-width:92px!important;padding:0 9px!important;margin-right:6px!important;border-radius:9px!important;white-space:nowrap!important;}
+  .chip-choice{min-width:42px!important;height:34px!important;padding:0 6px!important;border-radius:9px!important;font-size:12px!important;}
+  .undo-chip{min-width:34px!important;width:34px!important;padding:0!important;font-size:20px!important;}
+
+  .history-line{display:block!important;width:100%!important;margin-top:4px!important;}
+  .history-line #history.history{width:100%!important;justify-content:center!important;margin:0!important;gap:3px!important;flex-wrap:nowrap!important;overflow:hidden!important;}
+  .ball{width:27px!important;height:27px!important;min-width:27px!important;font-size:13px!important;}
+}
+</style>
+
 </head>
 <body>
 <div class="wrap">
 
   <div class="top">
     <div class="controls">
-      <button class="undo mini-control" onclick="undoLast()">Deshacer</button>
-      <button class="reset mini-control" onclick="resetAll()">Resetear</button>
+      <button class="undo mini-control" onclick="undoLast()">Undo</button>
+      <button class="reset mini-control" onclick="resetAll()">Reset</button>
       <div class="pnl-mini">
         <label class="pnl-mini-label">PnL
           <input id="pnlCurrent" type="number" step="1" value="0" oninput="setCurrentPnlDirect()">
         </label>
-        <button class="pnl-reset-dot" onclick="resetPnlOnly()" title="Resetear PnL a cero" aria-label="Resetear PnL a cero"></button>
-        <label class="pnl-mini-label" title="Pérdida desde última">PDU
+        <button class="pnl-reset-dot" onclick="resetPnlOnly()" title="Reset PnL to zero" aria-label="Reset PnL to zero"></button>
+        <label class="pnl-mini-label" title="Loss since last win">Loss
           <span class="pnl-readonly flat" id="pnlDelta">$0</span>
         </label>
       </div>
-      <div class="prog-mini-box bet strategy-bet-box">Apostar <strong id="progBet">—</strong></div>
     </div>
   </div>
 
@@ -528,9 +780,9 @@
   </div>
 
 
-  <div class="chips-row" id="chipsRow"><div class="bet-stat last-result-inline">Último <strong id="lastBetResult">—</strong></div><button class="chip-choice" data-chip="1" onclick="selectChip(1)">$1</button><button class="chip-choice" data-chip="5" onclick="selectChip(5)">$5</button><button class="chip-choice" data-chip="10" onclick="selectChip(10)">$10</button><button class="chip-choice" data-chip="20" onclick="selectChip(20)">$20</button><button class="chip-choice" data-chip="25" onclick="selectChip(25)">$25</button><button class="chip-choice" data-chip="50" onclick="selectChip(50)">$50</button><button class="chip-choice" data-chip="75" onclick="selectChip(75)">$75</button><button class="chip-choice" data-chip="100" onclick="selectChip(100)">$100</button><button class="chip-choice" data-chip="150" onclick="selectChip(150)">$150</button><button class="chip-choice" data-chip="200" onclick="selectChip(200)">$200</button><button class="chip-choice" data-chip="250" onclick="selectChip(250)">$250</button><button class="chip-choice" data-chip="300" onclick="selectChip(300)">$300</button><button class="chip-choice" data-chip="350" onclick="selectChip(350)">$350</button><button class="chip-choice" data-chip="400" onclick="selectChip(400)">$400</button><button class="chip-choice" data-chip="500" onclick="selectChip(500)">$500</button><button class="chip-choice undo-chip" onclick="undoLastBet()" title="Deshacer última apuesta" aria-label="Deshacer última apuesta">↶</button><button class="chip-choice clear-chip" onclick="clearBets()" title="Limpiar apuestas">Limpiar</button><button class="chip-choice clear-chip" onclick="doubleBets()" title="Duplicar todas las apuestas actuales">Doblar</button></div>
+  <div class="chips-row" id="chipsRow"><button class="quick-control quick-clear" id="quickClearBtn" onclick="clearBets()">Clear</button><button class="quick-control quick-double" id="quickDoubleBtn" onclick="doubleBets()">Double</button><button class="quick-control quick-lastbet" id="lastBetModeBtn" onclick="toggleLastBetMode()">Last Bet</button><div class="bet-stat last-result-inline">Last <strong id="lastBetResult">—</strong></div><button class="chip-choice" data-chip="1" onclick="selectChip(1)">$1</button><button class="chip-choice" data-chip="2" onclick="selectChip(2)">$2</button><button class="chip-choice" data-chip="5" onclick="selectChip(5)">$5</button><button class="chip-choice" data-chip="10" onclick="selectChip(10)">$10</button><button class="chip-choice" data-chip="20" onclick="selectChip(20)">$20</button><button class="chip-choice" data-chip="25" onclick="selectChip(25)">$25</button><button class="chip-choice" data-chip="50" onclick="selectChip(50)">$50</button><button class="chip-choice" data-chip="75" onclick="selectChip(75)">$75</button><button class="chip-choice" data-chip="100" onclick="selectChip(100)">$100</button><button class="chip-choice" data-chip="150" onclick="selectChip(150)">$150</button><button class="chip-choice" data-chip="200" onclick="selectChip(200)">$200</button><button class="chip-choice" data-chip="250" onclick="selectChip(250)">$250</button><button class="chip-choice" data-chip="300" onclick="selectChip(300)">$300</button><button class="chip-choice" data-chip="350" onclick="selectChip(350)">$350</button><button class="chip-choice" data-chip="400" onclick="selectChip(400)">$400</button><button class="chip-choice" data-chip="500" onclick="selectChip(500)">$500</button><button class="chip-choice undo-chip" onclick="undoLastBet()" title="Undo last bet" aria-label="Undo last bet">↶</button></div>
 
-  <div class="history" id="history"></div>
+  <div class="history-line"><div class="history" id="history"></div></div>
 </div>
 
 <script>
@@ -550,7 +802,10 @@ let strategyBase = Number(localStorage.getItem('roulette_strategy_v18_base') || 
 let strategyBlock = Math.max(0,Number(localStorage.getItem('roulette_strategy_v18_block') || 0));
 let strategyShot = Math.min(3,Math.max(1,Number(localStorage.getItem('roulette_strategy_v18_shot') || 1)));
 let strategyBalance = Number(localStorage.getItem('roulette_strategy_v18_balance') || 0);
+let strategyBlockBalance = Number(localStorage.getItem('roulette_strategy_v39_block_balance') || 0);
 let betPlacementHistory = JSON.parse(localStorage.getItem('roulette_bet_placement_history') || '[]');
+let lastBetAmount = Number(localStorage.getItem('roulette_last_bet_amount') || 0);
+let lastBetMode = false;
 
 function secureRandomInt(maxExclusive){
   if(window.crypto && crypto.getRandomValues){
@@ -611,8 +866,13 @@ function saveStrategy(){
   localStorage.setItem('roulette_strategy_v18_block',String(strategyBlock||0));
   localStorage.setItem('roulette_strategy_v18_shot',String(strategyShot||1));
   localStorage.setItem('roulette_strategy_v18_balance',String(strategyBalance||0));
+  localStorage.setItem('roulette_strategy_v39_block_balance',String(strategyBlockBalance||0));
 }
 function strategyAmount(){
+  // Self-heal stale/corrupt persisted state so the Bet display cannot freeze.
+  if(strategyActive && (!(strategyBase>0) || strategyShot<1 || strategyShot>3 || strategyBlock<0 || !Number.isFinite(strategyBalance))){
+    strategyActive=false; strategyPending=false; strategyBase=0; strategyBlock=0; strategyShot=1; strategyBalance=0; strategyBlockBalance=0; saveStrategy();
+  }
   if((!strategyActive && !strategyPending) || !(strategyBase>0)) return null;
   const x=strategyBase*Math.pow(2,strategyBlock);
   return strategyShot===3 ? x*2 : x;
@@ -635,6 +895,7 @@ function armStrategyFromCurrentBet(){
     strategyBlock=0;
     strategyShot=1;
     strategyBalance=0;
+    strategyBlockBalance=0;
   }else{
     strategyPending=false;
     strategyBase=0;
@@ -648,40 +909,63 @@ function lockStrategyAtSpin(total){
   strategyBlock=0;
   strategyShot=1;
   strategyBalance=0;
+  strategyBlockBalance=0;
   strategyActive=true;
   strategyPending=false;
   saveStrategy();
 }
 function advanceStrategy(net,total){
-  if(!strategyActive || !(total>0))return;
+  if(!strategyActive || !(total>0)) return false;
 
-  // Saldo INTERNO de esta escalera. No modifica el PDU visible.
+  // La campaña acumula el resultado neto. Cada bloque usa X, X, 2X,
+  // PERO cualquier victoria termina inmediatamente el bloque actual.
   strategyBalance += net;
+  strategyBlockBalance += net;
 
-  if(net>0){
-    // Si todavía no hemos recuperado todo lo perdido en esta campaña,
-    // mantenemos exactamente el mismo bloque y volvemos al tiro 1.
-    if(strategyBalance < 0){
-      strategyShot=1;
-    }else{
-      // Recuperado: volvemos al bloque inicial, sin cambiar la base elegida.
+  // WIN en la 1a, 2a o 3a apuesta: parar el bloque y borrar fichas.
+  // Si ya recuperamos toda la campaña, la próxima entrada manual define una base nueva.
+  // Si aún seguimos negativos, conservamos el mismo nivel pero volvemos al primer X.
+  if(net > 0){
+    if(strategyBalance >= 0){
+      strategyActive=false;
+      strategyPending=false;
+      strategyBase=0;
       strategyBlock=0;
       strategyShot=1;
       strategyBalance=0;
+      strategyBlockBalance=0;
+    }else{
+      strategyShot=1;
+      strategyBlockBalance=0;
     }
-  }else if(net<0){
-    // Tres tiros por bloque. Solo al perder los tres subimos un bloque.
-    if(strategyShot<3) strategyShot+=1;
-    else { strategyBlock+=1; strategyShot=1; }
+    saveStrategy();
+    renderStrategy();
+    return true;
   }
+
+  // LOSS: avanzar dentro del bloque X, X, 2X.
+  if(strategyShot < 3){
+    strategyShot += 1;
+    saveStrategy();
+    renderStrategy();
+    return false;
+  }
+
+  // Se perdió también el tercer valor 2X: subir un nivel y limpiar el tablero.
+  strategyBlock += 1;
+  strategyShot=1;
+  strategyBlockBalance=0;
   saveStrategy();
   renderStrategy();
+  return true;
 }
 function betKey(type,id){ return type+':'+id; }
 function selectChip(v){
   selectedChip=Number(v)||1;
   localStorage.setItem('roulette_selected_chip',String(selectedChip));
   renderChipSelector();
+  renderStrategy();
+  renderLastBetMode();
 }
 function renderChipSelector(){
   document.querySelectorAll('.chip-choice').forEach(b=>b.classList.toggle('selected',Number(b.dataset.chip)===selectedChip));
@@ -690,13 +974,45 @@ function renderChipSelector(){
 function saveBetPlacementHistory(){
   localStorage.setItem('roulette_bet_placement_history',JSON.stringify(betPlacementHistory));
 }
+function toggleLastBetMode(){
+  if(spinning)return;
+  lastBetMode=!lastBetMode;
+  renderLastBetMode();
+}
+function renderLastBetMode(){
+  const b=document.getElementById('lastBetModeBtn');
+  if(!b)return;
+  b.classList.toggle('active',lastBetMode);
+  b.textContent=lastBetMode?'Last Bet ✓':'Last Bet';
+}
+function placeLastBet(type,id){
+  if(spinning || !(lastBetAmount>0))return false;
+  const key=betKey(type,id);
+  bets[key]=Number(bets[key]||0)+lastBetAmount;
+  betPlacementHistory.push({key,amount:lastBetAmount});
+  localStorage.setItem('roulette_bets_v2',JSON.stringify(bets));
+  saveBetPlacementHistory();
+  if(!strategyActive) armStrategyFromCurrentBet();
+  lastBetMode=false;
+  renderLastBetMode();
+  renderBets();
+  return true;
+}
 function addBet(type,id,deltaSign=1){
   if(spinning)return;
+  if(deltaSign>0 && lastBetMode){
+    if(placeLastBet(type,id)) return;
+    lastBetMode=false; renderLastBetMode();
+  }
   const key=betKey(type,id);
   const cur=Number(bets[key]||0);
   if(deltaSign>0){
     bets[key]=cur+selectedChip;
     betPlacementHistory.push({key,amount:selectedChip});
+    // Last Bet remembers the COMPLETE amount most recently built on a betting cell,
+    // not merely the value of the last chip clicked. Example: $1+$1+$1+$1 => Last Bet = $4.
+    lastBetAmount=Number(bets[key]||0);
+    localStorage.setItem('roulette_last_bet_amount',String(lastBetAmount));
   }else{
     const remove=Math.min(selectedChip,cur);
     const next=cur-remove;
@@ -742,7 +1058,10 @@ function doubleBets(){
     amount=Number(amount)||0;
     bets[key]=amount*2;
     betPlacementHistory.push({key,amount});
+    // Last Bet must remember the FINAL wager after Double, not the pre-double amount.
+    lastBetAmount=Number(bets[key]||0);
   });
+  if(lastBetAmount>0)localStorage.setItem('roulette_last_bet_amount',String(lastBetAmount));
   localStorage.setItem('roulette_bets_v2',JSON.stringify(bets));
   saveBetPlacementHistory();
   if(!strategyActive) armStrategyFromCurrentBet();
@@ -781,9 +1100,9 @@ function settleBets(n){
   const el=document.getElementById('lastBetResult');
   if(el){el.textContent=total?formatSignedMoney(net):'Sin apuesta';el.style.color=net>0?'#6cff7a':net<0?'#ff6b6b':'#fff';}
   renderPnl();
-  advanceStrategy(net,total);
-  // Si el giro termina con ganancia neta, retirar todas las apuestas del tablero.
-  if(total>0 && net>0) clearBets();
+  const blockFinished = advanceStrategy(net,total);
+  // Se borran al ganar en cualquier tiro, o al perder el tercer tiro 2X.
+  if(blockFinished) clearBets();
 }
 function renderBets(){
   document.querySelectorAll('.bet-chip').forEach(e=>e.remove());
@@ -817,10 +1136,11 @@ function buildBoard(){
  topRow.forEach((n,i)=>addNum(n,i+2,1)); midRow.forEach((n,i)=>addNum(n,i+2,2)); botRow.forEach((n,i)=>addNum(n,i+2,3));
  ['F3','F2','F1'].forEach((f,idx)=>{ const el=document.createElement('div'); el.className='cell green-zone'; el.id=`zone-${f}`; el.style.gridColumn=14; el.style.gridRow=idx+1; el.innerHTML=`<div class="zone-count" id="${f}">0</div>`; makeBettable(el,'row',f); board.appendChild(el); });
  [['D1','2 / span 4'],['D2','6 / span 4'],['D3','10 / span 4']].forEach(([d,col])=>{ const el=document.createElement('div'); el.className='cell green-zone'; el.id=`zone-${d}`; el.style.gridColumn=col; el.style.gridRow=4; el.innerHTML=`<div class="zone-count" id="${d}">0</div>`; makeBettable(el,'dozen',d); board.appendChild(el); });
- const outside=[['low','1 a 18','2 / span 2'],['even','P','4 / span 2'],['red','red-dot','6 / span 2'],['black','black-dot','8 / span 2'],['odd','i','10 / span 2'],['high','19 a 36','12 / span 2']];
+ const outside=[['low','1-18','2 / span 2'],['even','EVEN','4 / span 2'],['red','red-dot','6 / span 2'],['black','black-dot','8 / span 2'],['odd','ODD','10 / span 2'],['high','19-36','12 / span 2']];
  outside.forEach(([id,label,col])=>{ const el=document.createElement('div'); el.className='cell outside-zone'; el.id=`zone-${id}`; el.style.gridColumn=col; el.style.gridRow=5;
   const symbol=(id==='red'||id==='black')?`<span class="outside-dot ${label}"></span>`:`${label}`;
   el.innerHTML=`<div class="outside-symbol">${symbol}</div><div class="small-count" id="out-${id}">0</div>`; makeBettable(el,'outside',id); board.appendChild(el); });
+ const betSlot=document.createElement('div'); betSlot.className='board-bet-slot'; betSlot.innerHTML='<div class="bet-circle" title="Next bet"><span>Bet</span><strong id="progBet">—</strong></div>'; board.appendChild(betSlot);
 }
 function recalc(){
  const numAbsence={}; for(let n=0;n<=36;n++)numAbsence[n]=0;
@@ -847,7 +1167,26 @@ function loadData(){ const data=localStorage.getItem('roulette_history'); if(dat
 function addNumber(n){ history.push(n); saveData(); render(); }
 function undoLast(){ if(history.length){ history.pop(); saveData(); render(); showSpinCount(history.length||'—'); } }
 function resetAll(){ history=[]; saveData(); showSpinCount('—'); render(); }
-loadData(); buildBoard(); renderPnl(); render(); renderBets(); renderStrategy(); showSpinCount(history.length||'—');
+loadData();
+// Migración v21: versiones anteriores podían dejar la estrategia activa en el
+// bloque inicial después de haber recuperado. Si no hay apuestas pendientes y
+// el saldo interno está en cero, la dejamos lista para que la siguiente entrada
+// manual escoja una base nueva.
+if(strategyActive && strategyBalance===0 && strategyBlock===0 && strategyShot===1 && currentBetTotal()===0){
+  strategyActive=false; strategyPending=false; strategyBase=0; saveStrategy();
+}
+buildBoard(); renderPnl(); render(); renderBets(); renderStrategy(); renderLastBetMode(); showSpinCount(history.length||'—');
+
+// v32 visual-only click acknowledgement: only Clear, Double, Last Bet and Spin.
+document.addEventListener('click', function(e){
+  const t=e.target.closest('#quickClearBtn,#quickDoubleBtn,#lastBetModeBtn,#spinBtn');
+  if(!t) return;
+  t.classList.remove('click-flash');
+  void t.offsetWidth;
+  t.classList.add('click-flash');
+  setTimeout(()=>t.classList.remove('click-flash'),170);
+}, true);
+
 </script>
 </body>
 </html>
