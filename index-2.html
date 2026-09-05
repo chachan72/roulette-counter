@@ -1,0 +1,1220 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Roulette Counter</title>
+<style>
+  :root{
+    --felt1:#0f5a22;
+    --felt2:#083814;
+    --gold:#c9a23a;
+    --red:#d81f1f;
+    --black:#121212;
+    --white:#f8f8f8;
+    --blue:#42a5ff;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:#000;
+    color:var(--white);
+    font-family:Georgia, "Times New Roman", serif;
+    zoom:0.78;
+  }
+  .top{margin-bottom:6px}
+  .board-wrap{padding:8px}
+  .system-panel{margin:8px 0 6px;padding:10px}
+  .history-title{margin:8px 0 6px;font-size:24px}
+  .history{gap:5px}
+  .ball{width:42px;height:42px;font-size:18px}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:16px}
+  .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .unit-box{display:flex;align-items:center;gap:8px;border:1.5px solid rgba(201,162,58,.75);border-radius:16px;padding:10px 14px;background:rgba(0,0,0,.32);font-size:17px;font-weight:700}
+  .unit-box input{width:120px;border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:8px 10px;background:#050505;color:#fff;font-size:17px;font-weight:700;text-align:center}
+  button{
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:16px;padding:14px 22px;font-size:18px;font-weight:700;
+    color:#fff;cursor:pointer;background:#111;min-width:160px;
+  }
+  .undo{background:#2b2b2b}
+  .reset{background:#a91515}
+  .board-wrap{
+    border:3px solid var(--gold);border-radius:28px;padding:14px;
+    background:linear-gradient(180deg,var(--felt1),var(--felt2));
+    box-shadow:0 12px 40px rgba(0,0,0,.35) inset;
+  }
+  .board{
+    display:grid;
+    grid-template-columns:110px repeat(12, 1fr) 74px;
+    grid-template-rows:92px 92px 92px 96px 84px;
+    overflow:hidden;border-radius:20px;
+  }
+  .cell{
+    position:relative;display:flex;align-items:center;justify-content:center;
+    border:1.8px solid var(--gold);user-select:none;
+  }
+  .num{cursor:pointer;font-size:34px;font-weight:700}
+  .num.red{background:rgba(160,0,0,.22)}
+  .num.black{background:rgba(0,0,0,.36)}
+  .num.green{background:rgba(0,80,20,.28)}
+  .num.red .main,.num.black .main{
+    width:68px;height:68px;border-radius:999px;display:flex;align-items:center;justify-content:center;
+  }
+  .num.red .main{background:var(--red)}
+  .num.black .main{background:#111}
+  .zero{
+    grid-row:1 / span 3;grid-column:1;
+    clip-path:polygon(18% 0%,100% 0%,100% 100%,18% 100%,0% 50%);
+    background:linear-gradient(180deg,#237635,#125223);
+  }
+  .zero .main{
+    width:76px;height:76px;border-radius:999px;background:#18b437;
+    display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;
+  }
+  .small-count{
+    position:absolute;right:8px;bottom:6px;font-size:16px;line-height:1;
+    font-weight:800;color:#42a5ff;opacity:1;pointer-events:none;
+    transition:color .18s ease, text-shadow .18s ease;
+  }
+  .small-count.leader{
+    color:#42a5ff;
+    text-shadow:0 0 10px rgba(66,165,255,.55);
+  }
+  .green-zone{
+    background:linear-gradient(180deg,#115c24,#0b4219);
+  }
+  .green-zone.alert{border-color:#ff4040;box-shadow:0 0 18px rgba(255,64,64,.32) inset;background:linear-gradient(180deg,#8d1010,#5f0b0b)}
+  .outside-zone{background:linear-gradient(180deg,#104d20,#082f13);font-size:20px;font-weight:700;text-align:center;padding:8px}
+  .outside-zone.alert{border-color:#ff4040;box-shadow:0 0 18px rgba(255,64,64,.32) inset;background:linear-gradient(180deg,#8d1010,#5f0b0b)}
+  .zero.alert{border-color:#ff4040;box-shadow:0 0 22px rgba(255,64,64,.38) inset;background:linear-gradient(180deg,#8d1010,#5f0b0b)}
+.outside-symbol{display:flex;align-items:center;justify-content:center;line-height:1;font-size:32px;font-weight:900;width:100%;height:34px}
+.outside-dot{width:30px;height:30px;border-radius:999px;display:inline-block}
+.outside-dot.red-dot{background:var(--red)}
+.outside-dot.black-dot{background:#000;border:1px solid rgba(255,255,255,.18)}
+  .zone-count{
+    font-size:54px;line-height:1;font-weight:800;color:#42a5ff;
+  }
+  .history-title{
+    margin:18px 0 12px;text-align:center;color:var(--gold);
+    font-size:28px;font-weight:700;letter-spacing:.04em;
+  }
+  .history{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  .ball{
+    width:54px;height:54px;border-radius:999px;display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:700;border:1.5px solid rgba(255,255,255,.35);
+  }
+  .ball.red{background:var(--red)}
+  .ball.black{background:#111}
+  .ball.green{background:#129b2f}
+
+  .system-panel{margin:16px 0 10px;border:2px solid rgba(201,162,58,.75);border-radius:22px;padding:14px;background:linear-gradient(180deg,rgba(12,38,18,.94),rgba(5,15,8,.94));box-shadow:0 10px 30px rgba(0,0,0,.28)}
+  .system-title{color:var(--gold);font-size:22px;font-weight:700;text-align:center;margin-bottom:12px;letter-spacing:.03em}
+  .signals{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .subsignals{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px}
+  .signal-card{border:1.5px solid rgba(255,255,255,.18);border-radius:18px;padding:14px 10px;background:rgba(0,0,0,.24);min-height:88px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+  .signal-card.enter{border-color:#ff4040;box-shadow:0 0 18px rgba(255,64,64,.28)}
+  .signal-card.watch,.signal-card.wait{border-color:rgba(255,255,255,.18);box-shadow:none}
+  .signal-name{font-size:19px;font-weight:900;text-transform:uppercase;letter-spacing:.02em;margin:0}
+  .signal-status,.signal-action,.progression-line{display:none!important}
+  .money-line{margin:0;font-size:19px;font-weight:800;color:#fff}
+  .next-step{color:#42a5ff;font-size:19px;font-weight:900;text-shadow:0 0 8px rgba(66,165,255,.45)}
+
+
+  /* --- Controles minimalistas: SPIN, PnL y apuestas --- */
+  .fib-box{
+    height:42px;padding:0 12px;border:1px solid rgba(255,255,255,.18);border-radius:12px;
+    background:rgba(0,0,0,.28);display:flex;align-items:center;gap:8px;white-space:nowrap;
+    font-size:13px;font-weight:800;color:#ddd;
+  }
+  .fib-box strong{color:#f4d35e;font-size:14px;letter-spacing:.02em}
+  .top{justify-content:flex-start;margin-bottom:10px}
+  .controls{gap:8px;width:100%}
+  .mini-control{
+    border:1px solid rgba(255,255,255,.20);border-radius:14px;background:#111;color:#fff;
+    height:48px;padding:0 16px;font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:center;
+  }
+  button.mini-control{min-width:auto;cursor:pointer}
+  .undo.mini-control{background:#2b2b2b}
+  .reset.mini-control{background:#a91515}
+  .spin-box{background:#176d2c!important;border-color:rgba(201,162,58,.8)!important;min-width:142px!important;gap:10px}
+  .spin-box:disabled{opacity:.6;cursor:default}
+  .spin-label{font-size:16px;letter-spacing:.04em}
+  .spin-value{min-width:34px;font-size:25px;line-height:1;font-weight:900}
+  .spin-value.red{color:#ff5656}.spin-value.black{color:#fff}.spin-value.green{color:#56e676}
+  .board-spin{grid-column:1;grid-row:4;width:100%;height:100%;min-width:0!important;padding:0!important;border:1.8px solid var(--gold)!important;border-radius:0!important;background:linear-gradient(180deg,#115c24,#0b4219)!important;color:#06283a;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .spin-circle{width:76px;height:76px;border-radius:999px;background:#70c9f4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:#000;box-shadow:0 0 0 1px rgba(255,255,255,.25) inset}
+  .board-spin .spin-label{font-size:13px;font-weight:900;color:#000}
+  .board-spin .spin-value{font-size:25px;color:#000!important;font-weight:900}
+
+  .pnl-mini{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-left:auto}
+  .pnl-mini-label{height:48px;padding:0 10px;border:1px solid rgba(66,165,255,.45);border-radius:14px;background:rgba(5,17,27,.94);display:flex;align-items:center;gap:7px;font-size:14px;font-weight:800;color:#d8eaff}
+  .pnl-mini input{width:105px;height:34px;border:1px solid rgba(255,255,255,.18);border-radius:9px;background:#050505;color:#fff;font-size:16px;font-weight:800;text-align:right;padding:0 8px}
+  .pnl-action{background:#145f9e}.pnl-base-action{background:#5b4715}
+  .pnl-delta-mini{min-width:150px;border-color:rgba(66,165,255,.45);background:#07131d}
+  .pnl-delta-mini.loss{color:#ff7373}.pnl-delta-mini.win{color:#72e58d}.pnl-delta-mini.flat{color:#fff}
+
+  .bet-chip{
+    position:absolute;z-index:5;right:4px;top:4px;left:auto;transform:none;
+    min-width:36px;height:24px;border-radius:9px;background:#f4d35e;color:#111;
+    border:2px solid #8a6412;display:flex;align-items:center;justify-content:center;
+    font:900 11px Arial,sans-serif;box-shadow:0 2px 7px rgba(0,0,0,.5);pointer-events:none;padding:0 4px;
+  }
+  .cell.bettable{cursor:pointer}
+  .cell.bettable:hover{box-shadow:0 0 14px rgba(244,211,94,.38) inset}
+
+  .bet-tools{margin:10px 0 5px;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
+  .bet-stat{height:42px;padding:0 13px;border:1px solid rgba(255,255,255,.18);border-radius:12px;background:rgba(0,0,0,.28);display:flex;align-items:center;gap:7px;font-size:14px;font-weight:800}
+  .bet-stat strong{font-size:17px;color:#fff}
+  .chips-row{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;margin:8px 0 2px}
+  .chip-choice{
+    min-width:46px!important;height:38px;padding:0 9px!important;border-radius:12px!important;
+    border:1px solid rgba(201,162,58,.58)!important;background:#151515!important;color:#fff!important;
+    font-size:14px!important;font-family:Arial,sans-serif;font-weight:900!important;
+  }
+  .chip-choice.selected{background:#f4d35e!important;color:#111!important;border-color:#fff0a5!important;box-shadow:0 0 0 2px rgba(244,211,94,.22)}
+  .undo-bet-choice{min-width:128px;background:#2b2b2b!important;border-color:rgba(255,255,255,.3)!important;color:#fff!important}
+  .chip-caption{text-align:center;margin-top:7px;color:var(--gold);font-size:13px;font-weight:800;letter-spacing:.02em}
+  @media (max-width:900px){
+    .board{grid-template-columns:76px repeat(12,1fr) 54px;grid-template-rows:66px 66px 66px 74px 64px}
+    .num{font-size:24px}
+    .num.red .main,.num.black .main{width:48px;height:48px}
+    .zero .main{width:54px;height:54px;font-size:28px}
+    .zone-count{font-size:38px}
+    .ball{width:42px;height:42px;font-size:18px}
+    button{min-width:auto;font-size:16px;padding:12px 16px}
+    .small-count{font-size:14px;right:6px;bottom:4px}
+    .signals,.subsignals{grid-template-columns:1fr}
+    .system-title{font-size:20px}
+  }
+
+  /* --- Progresión de docena: mínima y automática --- */
+  .dozen-prog{
+    margin:8px auto 0;max-width:620px;min-height:44px;padding:6px 10px;
+    border:1px solid rgba(201,162,58,.62);border-radius:13px;background:rgba(0,0,0,.24);
+    display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;
+    font-family:Arial,sans-serif;font-size:12px;font-weight:800;letter-spacing:.02em;
+  }
+  .dozen-prog .prog-title{color:var(--gold);font-size:11px;letter-spacing:.08em}
+  .dozen-prog .prog-item{display:flex;align-items:baseline;gap:5px;color:#d7d7d7}
+  .dozen-prog .prog-item strong{color:#fff;font-size:16px}
+  .dozen-prog .prog-bet strong{color:#f4d35e;font-size:19px}
+  .dozen-prog.aggressive{border-color:#ff5656;box-shadow:0 0 14px rgba(255,64,64,.16) inset}
+  .dozen-prog.aggressive .prog-mode{color:#ff7373}
+  .dozen-prog.waiting{opacity:.72}
+  .dozen-prog.stop{border-color:#ff4040;background:rgba(90,0,0,.24)}
+
+
+  /* --- Layout horizontal compacto para iPhone --- */
+  body{zoom:.68}
+  .wrap{max-width:1400px;padding:6px 8px 0}
+  .top{margin:0 0 4px}
+  .controls{gap:5px;flex-wrap:nowrap;align-items:center}
+  .mini-control{height:38px;padding:0 10px;border-radius:10px;font-size:13px}
+  .undo.mini-control,.reset.mini-control{padding:0 11px}
+  .spin-box{min-width:105px!important;gap:6px}
+  .spin-label{font-size:13px}.spin-value{font-size:21px;min-width:28px}
+  .spin-circle{width:54px;height:54px}
+  .spin-circle .spin-label{font-size:10px}
+  .spin-circle .spin-value{font-size:20px}
+  .pnl-mini{margin-left:0;gap:5px;flex-wrap:nowrap}
+  .pnl-mini-label{height:38px;padding:0 6px;border-radius:10px;font-size:11px;gap:4px;white-space:nowrap}
+  .pnl-mini input{width:52px;height:28px;font-size:13px;padding:0 4px}
+  .pnl-readonly{width:52px;height:28px;border:1px solid rgba(255,255,255,.18);border-radius:9px;background:#050505;color:#fff;font-size:14px;font-weight:800;text-align:right;padding:0 5px;display:flex;align-items:center;justify-content:flex-end;box-sizing:border-box}
+  .pnl-readonly.loss{color:#ff7373}.pnl-readonly.flat{color:#fff}
+  .fib-box{height:38px;padding:0 6px;border-radius:10px;gap:5px;font-size:10px;flex:1;min-width:0;overflow:visible}
+  .fib-box strong{font-size:14px;letter-spacing:.01em;word-spacing:1px}
+  .prog-mini-box{height:38px;padding:0 10px;border:1px solid #ededed;border-radius:10px;background:#cfcfcf;display:flex;align-items:center;gap:5px;white-space:nowrap;font-family:Georgia,"Times New Roman",serif;font-size:13px;font-weight:700;color:#111;box-sizing:border-box}
+  .prog-mini-box strong{color:#111;font-size:13px;font-weight:700}
+  .prog-mini-box.bet strong{color:#111;font-size:13px;font-weight:700}
+  .board-wrap{padding:8px;margin-top:0;border-radius:22px}
+  .chips-row{margin:4px 0 0;gap:4px;flex-wrap:nowrap}
+  .chip-choice{min-width:40px!important;height:32px;padding:0 6px!important;border-radius:9px!important;font-size:12px!important}
+  .undo-chip{min-width:34px!important;width:34px!important;padding:0!important;font-size:21px!important;line-height:1;background:#2b2b2b!important;color:#fff!important;border-color:rgba(255,255,255,.35)!important}
+  .clear-chip{min-width:58px!important;background:#2b2b2b!important;color:#fff!important;border-color:rgba(255,255,255,.35)!important}
+  .last-result-inline{margin-right:12px;min-width:76px;justify-content:center;white-space:nowrap}
+  .chip-caption{margin-top:3px;font-size:11px}
+  .bet-tools{margin:4px 0 2px;gap:5px;flex-wrap:nowrap}
+  .bet-stat{height:32px;padding:0 9px;border-radius:9px;font-size:12px}
+  .bet-stat strong{font-size:14px}
+  .history-title{margin:4px 0 3px;font-size:18px}
+  .history{gap:3px;margin:3px 0 0;padding:0;line-height:1;justify-content:center;flex-wrap:nowrap;overflow:hidden;width:100%}
+  .ball{width:27px;height:27px;min-width:27px;font-size:13px}
+
+  html,body{min-height:0;height:auto;}
+
+
+/* === 4 CAMBIOS EXACTOS === */
+/* 1) Exactamente 35 resultados, centrados bajo el tablero */
+#history.history{
+  display:grid!important;
+  grid-template-columns:repeat(35,27px)!important;
+  column-gap:3px!important;
+  width:100%!important;
+  max-width:none!important;
+  margin:4px auto 0!important;
+  padding:0!important;
+  justify-content:center!important;
+  align-items:center!important;
+  overflow:visible!important;
+}
+#history .ball{
+  width:27px!important;height:27px!important;min-width:27px!important;
+  font-size:13px!important;margin:0!important;
+}
+
+/* 2) Fibonacci más grande, ocupando visualmente la franja */
+.fib-box{
+  flex:1 1 0!important;
+  min-width:0!important;
+  height:38px!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+}
+.fib-box span{font-size:13px!important;font-weight:900!important;flex:0 0 auto!important}
+.fib-box strong{
+  display:block!important;
+  flex:1 1 auto!important;
+  font-size:18.6px!important;
+  line-height:1!important;
+  letter-spacing:-.15px!important;
+  word-spacing:-.2px!important;
+  white-space:nowrap!important;
+  color:#f4d35e!important;
+}
+
+/* 3) Paso y Apostar: aspecto de Resetear, pero gris claro */
+.prog-mini-box,.prog-mini-box.bet{
+  height:38px!important;
+  min-width:86px!important;
+  padding:0 11px!important;
+  border:1px solid rgba(255,255,255,.30)!important;
+  border-radius:10px!important;
+  background:#d0d0d0!important;
+  color:#171717!important;
+  font-family:Arial,Helvetica,sans-serif!important;
+  font-size:13px!important;
+  font-weight:700!important;
+  line-height:1!important;
+  box-shadow:none!important;
+}
+.prog-mini-box strong,.prog-mini-box.bet strong{
+  color:#171717!important;
+  font-family:Arial,Helvetica,sans-serif!important;
+  font-size:13px!important;
+  font-weight:700!important;
+}
+
+/* 4) SPIN: la casilla vuelve al verde; solo el círculo es azul claro */
+#spinBtn.board-spin{
+  background:linear-gradient(180deg,#115c24,#0b4219)!important;
+  background-color:#0f5a22!important;
+  border:1.8px solid var(--gold)!important;
+  border-radius:0!important;
+  padding:0!important;
+  box-shadow:none!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  appearance:none!important;
+  -webkit-appearance:none!important;
+}
+#spinBtn .spin-circle{
+  width:76px!important;height:76px!important;min-width:76px!important;min-height:76px!important;
+  border-radius:999px!important;
+  background:#70c9f4!important;
+  background-color:#70c9f4!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  color:#000!important;
+  box-shadow:none!important;
+}
+#spinBtn .spin-label{font-family:Arial,Helvetica,sans-serif!important;font-size:13px!important;font-weight:900!important;color:#000!important}
+#spinBtn .spin-value{font-family:Arial,Helvetica,sans-serif!important;font-size:25px!important;font-weight:900!important;color:#000!important}
+
+
+/* ==========================================================
+   AJUSTE FINAL — 6 PUNTOS SOLICITADOS (v5)
+   Este bloque va al final para prevalecer sobre estilos previos.
+   ========================================================== */
+
+/* 1) 35 últimos números, centrados respecto al tablero completo */
+#history.history{
+  width:100% !important;
+  display:flex !important;
+  flex-wrap:nowrap !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:3px !important;
+  margin:4px auto 0 !important;
+  padding:0 !important;
+  overflow:hidden !important;
+}
+#history.history .ball{
+  flex:0 0 27px !important;
+  width:27px !important;
+  height:27px !important;
+  min-width:27px !important;
+  margin:0 !important;
+  font-size:13px !important;
+}
+
+/* 2) Fibonacci más grande y distribuido hasta el extremo de su casilla */
+.fib-box{
+  flex:1 1 auto !important;
+  min-width:0 !important;
+  height:38px !important;
+  padding:0 8px !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:8px !important;
+  overflow:hidden !important;
+}
+.fib-box .fib-label{
+  flex:0 0 auto !important;
+  font-size:15px !important;
+  font-weight:900 !important;
+  color:#ddd !important;
+}
+.fib-box .fib-seq{
+  flex:1 1 auto !important;
+  min-width:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:4px !important;
+  color:#f4d35e !important;
+  font-family:Georgia,"Times New Roman",serif !important;
+  font-size:17px !important;
+  line-height:1 !important;
+  font-weight:900 !important;
+  letter-spacing:0 !important;
+  white-space:nowrap !important;
+}
+.fib-box .fib-seq > span{display:inline-block !important; flex:0 0 auto !important;}
+
+/* Paso y Apostar: mismo color y tipografía que DESHACER */
+.prog-mini-box,.prog-mini-box.bet{
+  height:38px !important;
+  min-width:88px !important;
+  padding:0 11px !important;
+  border:1px solid rgba(255,255,255,.28) !important;
+  border-radius:10px !important;
+  background:#2b2b2b !important;
+  color:#fff !important;
+  font-family:Arial,Helvetica,sans-serif !important;
+  font-size:13px !important;
+  font-weight:800 !important;
+  line-height:1 !important;
+  box-shadow:none !important;
+}
+.prog-mini-box strong,.prog-mini-box.bet strong{
+  color:#fff !important;
+  font-family:Arial,Helvetica,sans-serif !important;
+  font-size:13px !important;
+  font-weight:800 !important;
+}
+
+/* 4) SPIN: solo círculo azul claro; toda la casilla conserva el verde original */
+#spinBtn.board-spin{
+  grid-column:1 !important;
+  grid-row:4 / span 2 !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  padding:0 !important;
+  margin:0 !important;
+  border:1.8px solid var(--gold) !important;
+  border-radius:0 !important;
+  background:linear-gradient(180deg,#115c24,#0b4219) !important;
+  background-color:#0f5a22 !important;
+  box-shadow:none !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  appearance:none !important;
+  -webkit-appearance:none !important;
+}
+#spinBtn.board-spin .spin-circle{
+  box-sizing:border-box !important;
+  width:76px !important;
+  height:76px !important;
+  min-width:76px !important;
+  min-height:76px !important;
+  max-width:76px !important;
+  max-height:76px !important;
+  border-radius:50% !important;
+  background:#70c9f4 !important;
+  border:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:1px !important;
+  color:#000 !important;
+  box-shadow:none !important;
+}
+#spinBtn .spin-label{font-size:13px !important;font-weight:900 !important;color:#000 !important;}
+#spinBtn .spin-value{font-size:25px !important;font-weight:900 !important;color:#000 !important;min-width:0 !important;}
+
+/* 5) Importe amarillo de cada apuesta un poco más grande */
+.bet-chip{
+  font-family:Arial,Helvetica,sans-serif !important;
+  font-size:14px !important;
+  font-weight:900 !important;
+  min-width:38px !important;
+  height:25px !important;
+  line-height:1 !important;
+}
+
+/* 6) Contadores grandes de las DOCENAS en blanco. Filas 1/2/3 siguen azules. */
+#zone-D1 .zone-count,
+#zone-D2 .zone-count,
+#zone-D3 .zone-count,
+#zone-F1 .zone-count,
+#zone-F2 .zone-count,
+#zone-F3 .zone-count{
+  color:#fff !important;
+  text-shadow:none !important;
+}
+
+/* v10: contadores inferiores (1-18, P, rojo, negro, i, 19-36)
+   del mismo tamaño visual que los contadores azules de las casillas numéricas. */
+.outside-zone .small-count{
+  font-size:22px !important;
+  font-weight:900 !important;
+  right:8px !important;
+  bottom:6px !important;
+  color:#42a5ff !important;
+  opacity:1 !important;
+}
+@media (max-width:900px){
+  .outside-zone .small-count{font-size:19px !important;font-weight:900 !important;right:6px !important;bottom:4px !important;}
+}
+
+
+.strategy-bet-box{margin-left:auto;min-width:118px!important;}
+.strategy-bet-box strong{font-size:16px!important;}
+.pnl-reset-dot{width:16px;height:16px;min-width:16px;padding:0;border-radius:50%;border:1px solid rgba(255,255,255,.55);background:#777;cursor:pointer;box-shadow:none;margin-left:-3px;}
+.pnl-reset-dot:active{transform:scale(.9);background:#aaa;}
+
+/* v24 Mac quick controls: compact boxes below SPIN, immediately left of Last */
+@media (min-width:900px){
+  #spinBtn.board-spin{grid-column:1 !important;grid-row:4 / span 2 !important;}
+  #spinActions{display:none !important;}
+  .chips-row{justify-content:flex-start !important;}
+  .quick-control{
+    height:38px !important; min-width:82px !important; padding:0 11px !important;
+    border:1px solid rgba(255,255,255,.28) !important; border-radius:10px !important;
+    color:#fff !important; font-family:Arial,Helvetica,sans-serif !important;
+    font-size:13px !important; font-weight:800 !important; line-height:1 !important;
+    cursor:pointer !important; box-shadow:none !important;
+  }
+  .quick-clear{background:#a91515 !important;}
+  .quick-double{background:#1f6f9f !important;}
+  .quick-lastbet{background:#6b4aa5 !important;}
+  .quick-lastbet.active{background:#b27a19 !important; outline:2px solid #f4d35e !important;}
+  .last-result-inline{height:38px !important;min-width:105px !important;padding:0 11px !important;border-radius:10px !important;background:#2b2b2b !important;border:1px solid rgba(255,255,255,.28) !important;}
+}
+
+
+/* v32: subtle click feedback ONLY for Clear, Double, Last Bet and Spin */
+#quickClearBtn, #quickDoubleBtn, #lastBetModeBtn, #spinBtn {
+  -webkit-tap-highlight-color: transparent;
+  transition: filter .08s ease, box-shadow .08s ease, opacity .08s ease !important;
+}
+#quickClearBtn:active, #quickDoubleBtn:active, #lastBetModeBtn:active, #spinBtn:active {
+  filter: brightness(1.18) !important;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.42) !important;
+}
+.click-flash {
+  animation: clickFlash .16s ease-out !important;
+}
+@keyframes clickFlash {
+  0% { filter:brightness(1.22); box-shadow:inset 0 0 0 2px rgba(255,255,255,.48), 0 0 5px rgba(255,255,255,.18); }
+  100% { filter:brightness(1); box-shadow:none; }
+}
+
+
+/* v42 iPhone fast-touch: immediate controls without 180ms spin lock */
+#spinBtn, #quickClearBtn, #quickDoubleBtn, #lastBetModeBtn {
+  -webkit-tap-highlight-color: transparent !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+/* v41 iPhone touch reliability: no layout/strategy changes */
+#spinBtn, #quickClearBtn, #quickDoubleBtn, #lastBetModeBtn {
+  touch-action: manipulation !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+</style>
+
+<style>
+/* Mac desktop layout: preserve all logic, enlarge the existing interface */
+@media (min-width: 900px){
+  body{font-size:18px;}
+  .wrap{max-width:1500px !important; width:96vw !important; margin:18px auto !important;}
+  button,input{font-size:16px !important;}
+  .cell,.num,.zero,.dozen,.outside,.rowbet{min-height:58px !important;}
+  .bet-chip{font-size:15px !important; padding:3px 7px !important;}
+  .count{font-size:18px !important;}
+  .history-ball{width:34px !important;height:34px !important;font-size:14px !important;}
+}
+
+/* v24 Mac quick controls: compact boxes below SPIN, immediately left of Last */
+@media (min-width:900px){
+  #spinBtn.board-spin{grid-column:1 !important;grid-row:4 / span 2 !important;}
+  #spinActions{display:none !important;}
+  .chips-row{justify-content:flex-start !important;}
+  .quick-control{
+    height:38px !important; min-width:82px !important; padding:0 11px !important;
+    border:1px solid rgba(255,255,255,.28) !important; border-radius:10px !important;
+    color:#fff !important; font-family:Arial,Helvetica,sans-serif !important;
+    font-size:13px !important; font-weight:800 !important; line-height:1 !important;
+    cursor:pointer !important; box-shadow:none !important;
+  }
+  .quick-clear{background:#a91515 !important;}
+  .quick-double{background:#1f6f9f !important;}
+  .quick-lastbet{background:#6b4aa5 !important;}
+  .quick-lastbet.active{background:#b27a19 !important; outline:2px solid #f4d35e !important;}
+  .last-result-inline{height:38px !important;min-width:105px !important;padding:0 11px !important;border-radius:10px !important;background:#2b2b2b !important;border:1px solid rgba(255,255,255,.28) !important;}
+}
+
+</style>
+
+<style>
+/* v19 Mac FULL SCREEN: use essentially the entire browser viewport */
+@media (min-width: 900px){
+  html,body{width:100%;min-height:100%;}
+  body{zoom:1 !important; overflow-x:hidden;}
+  .wrap{max-width:none !important;width:100vw !important;margin:0 !important;padding:10px 14px 8px !important;}
+  .top{margin-bottom:8px !important;}
+  .pnl-mini input{width:82px !important;min-width:82px !important;}
+  .board-wrap{width:100% !important;padding:12px !important;border-radius:20px !important;}
+  .board{width:100% !important;grid-template-columns:120px repeat(12,minmax(0,1fr)) 84px !important;grid-template-rows:clamp(100px,14vh,145px) clamp(100px,14vh,145px) clamp(100px,14vh,145px) clamp(90px,12vh,125px) clamp(80px,11vh,112px) !important;}
+  .num{font-size:clamp(34px,2.6vw,48px) !important;}
+  .num.red .main,.num.black .main{width:clamp(66px,5.2vw,88px) !important;height:clamp(66px,5.2vw,88px) !important;}
+  .zero .main{width:clamp(76px,5.8vw,96px) !important;height:clamp(76px,5.8vw,96px) !important;font-size:clamp(36px,2.8vw,50px) !important;}
+  .small-count,.outside-zone .small-count{font-size:clamp(19px,1.45vw,26px) !important;}
+  .zone-count{font-size:clamp(28px,2.2vw,40px) !important;}
+  .bet-chip{font-size:clamp(15px,1.15vw,20px) !important;padding:4px 8px !important;}
+  .history{width:100% !important;justify-content:center !important;}
+}
+
+/* v24 Mac quick controls: compact boxes below SPIN, immediately left of Last */
+@media (min-width:900px){
+  #spinBtn.board-spin{grid-column:1 !important;grid-row:4 / span 2 !important;}
+  #spinActions{display:none !important;}
+  .chips-row{justify-content:flex-start !important;}
+  .quick-control{
+    height:38px !important; min-width:82px !important; padding:0 11px !important;
+    border:1px solid rgba(255,255,255,.28) !important; border-radius:10px !important;
+    color:#fff !important; font-family:Arial,Helvetica,sans-serif !important;
+    font-size:13px !important; font-weight:800 !important; line-height:1 !important;
+    cursor:pointer !important; box-shadow:none !important;
+  }
+  .quick-clear{background:#a91515 !important;}
+  .quick-double{background:#1f6f9f !important;}
+  .quick-lastbet{background:#6b4aa5 !important;}
+  .quick-lastbet.active{background:#b27a19 !important; outline:2px solid #f4d35e !important;}
+  .last-result-inline{height:38px !important;min-width:105px !important;padding:0 11px !important;border-radius:10px !important;background:#2b2b2b !important;border:1px solid rgba(255,255,255,.28) !important;}
+}
+
+</style>
+
+<style>
+/* v23 Mac: DOBLAR + LIMPIAR directly below SPIN, together using the same total width */
+@media (min-width: 900px){
+  #spinBtn.board-spin{grid-column:1 !important;grid-row:4 !important;width:100% !important;height:100% !important;}
+  #spinActions.board-spin-actions{grid-column:1 !important;grid-row:5 !important;width:100% !important;height:100% !important;display:grid !important;grid-template-columns:1fr 1fr !important;gap:0 !important;min-width:0 !important;}
+  #spinActions .board-action{width:100% !important;height:100% !important;min-width:0 !important;margin:0 !important;padding:0 4px !important;border:1.8px solid var(--gold) !important;border-radius:0 !important;background:linear-gradient(180deg,#115c24,#0b4219) !important;color:#fff !important;font-size:clamp(13px,1vw,18px) !important;font-weight:900 !important;display:flex !important;align-items:center !important;justify-content:center !important;cursor:pointer !important;}
+  #spinActions #clearBoardBtn{border-left-width:0 !important;}
+}
+
+/* v24 Mac quick controls: compact boxes below SPIN, immediately left of Last */
+@media (min-width:900px){
+  #spinBtn.board-spin{grid-column:1 !important;grid-row:4 / span 2 !important;}
+  #spinActions{display:none !important;}
+  .chips-row{justify-content:flex-start !important;}
+  .quick-control{
+    height:38px !important; min-width:82px !important; padding:0 11px !important;
+    border:1px solid rgba(255,255,255,.28) !important; border-radius:10px !important;
+    color:#fff !important; font-family:Arial,Helvetica,sans-serif !important;
+    font-size:13px !important; font-weight:800 !important; line-height:1 !important;
+    cursor:pointer !important; box-shadow:none !important;
+  }
+  .quick-clear{background:#a91515 !important;}
+  .quick-double{background:#1f6f9f !important;}
+  .quick-lastbet{background:#6b4aa5 !important;}
+  .quick-lastbet.active{background:#b27a19 !important; outline:2px solid #f4d35e !important;}
+  .last-result-inline{height:38px !important;min-width:105px !important;padding:0 11px !important;border-radius:10px !important;background:#2b2b2b !important;border:1px solid rgba(255,255,255,.28) !important;}
+}
+
+</style>
+
+<style>
+/* v29 VISUAL-ONLY: built directly from v27. Strategy/betting JavaScript untouched. */
+@media (min-width:900px){
+  .pnl-mini-label:first-child{
+    background:#176b3a !important;
+    border:1px solid rgba(255,255,255,.32) !important;
+    border-radius:10px !important;
+    padding:5px 8px !important;
+  }
+  .pnl-mini-label:first-child input{
+    background:#0d2619 !important;
+    border-color:rgba(255,255,255,.28) !important;
+  }
+  .pnl-mini-label[title="Loss since last win"]{
+    background:#8a4b12 !important;
+    border:1px solid rgba(255,255,255,.32) !important;
+    border-radius:10px !important;
+    padding:5px 8px !important;
+  }
+  .pnl-mini-label[title="Loss since last win"] .pnl-readonly{
+    background:#25170b !important;
+    border-color:rgba(255,255,255,.28) !important;
+  }
+  .history-line{
+    display:grid !important;
+    grid-template-columns:1fr 76px !important;
+    align-items:center !important;
+    gap:10px !important;
+    width:100% !important;
+    margin-top:4px !important;
+  }
+  .history-line #history.history{
+    width:100% !important; min-width:0 !important;
+    justify-content:flex-end !important; margin:0 !important;
+  }
+  .bet-circle{
+    width:72px !important; height:72px !important; border-radius:50% !important;
+    background:#8b3fc2 !important; border:2px solid rgba(255,255,255,.5) !important;
+    display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important;
+    color:#fff !important; font-family:Arial,Helvetica,sans-serif !important; line-height:1 !important;
+    box-shadow:0 2px 8px rgba(0,0,0,.35) !important; flex:none !important;
+  }
+  .bet-circle span{font-size:12px !important;font-weight:800 !important;text-transform:uppercase !important;margin-bottom:4px !important;}
+  .bet-circle strong{font-size:19px !important;font-weight:900 !important;max-width:64px !important;overflow:hidden !important;text-overflow:ellipsis !important;}
+}
+
+/* v30 VISUAL ONLY: BET moved into the empty right-hand board rectangle (column 14, rows 4-5). */
+@media (min-width:900px){
+  .history-line{display:block !important;width:100% !important;margin-top:4px !important;}
+  .history-line #history.history{width:100% !important;justify-content:center !important;margin:0 !important;}
+  .board-bet-slot{
+    grid-column:14 !important; grid-row:4 / span 2 !important;
+    border:1.8px solid var(--gold) !important;
+    background:linear-gradient(180deg,#115c24,#0b4219) !important;
+    display:flex !important;align-items:center !important;justify-content:center !important;
+    min-width:0 !important;overflow:hidden !important;
+  }
+  .board-bet-slot .bet-circle{
+    width:72px !important;height:72px !important;margin:0 !important;
+  }
+}
+</style>
+
+
+<style>
+/* v39 iPhone landscape shell — visual only. Strategy/betting JS unchanged. */
+@media (max-width:1100px){
+  html,body{margin:0!important;padding:0!important;background:#000!important;min-height:0!important;}
+  body{zoom:.58!important;overflow-x:hidden!important;}
+  .wrap{width:1450px!important;max-width:none!important;margin:0!important;padding:6px 8px 4px!important;}
+  .top{margin:0 0 4px!important;}
+  .controls{gap:6px!important;flex-wrap:nowrap!important;}
+  .mini-control{height:38px!important;padding:0 11px!important;border-radius:10px!important;font-size:13px!important;}
+  .pnl-mini{margin-left:0!important;gap:5px!important;flex-wrap:nowrap!important;}
+  .pnl-mini-label{height:38px!important;padding:0 8px!important;border-radius:10px!important;font-size:12px!important;gap:5px!important;}
+  .pnl-mini input{width:68px!important;min-width:68px!important;height:28px!important;font-size:14px!important;padding:0 5px!important;}
+  .pnl-readonly{width:62px!important;height:28px!important;font-size:14px!important;}
+  .pnl-reset-dot{width:15px!important;height:15px!important;min-width:15px!important;}
+
+  .board-wrap{width:100%!important;padding:7px!important;margin:0!important;border-radius:20px!important;}
+  .board{width:100%!important;grid-template-columns:110px repeat(12,minmax(0,1fr)) 82px!important;grid-template-rows:92px 92px 92px 96px 84px!important;}
+  .num{font-size:34px!important;}
+  .num.red .main,.num.black .main{width:68px!important;height:68px!important;}
+  .zero .main{width:76px!important;height:76px!important;font-size:38px!important;}
+  .zone-count{font-size:42px!important;}
+  .small-count,.outside-zone .small-count{font-size:18px!important;}
+  .spin-circle{width:76px!important;height:76px!important;}
+  .board-spin .spin-label{font-size:13px!important;}
+  .board-spin .spin-value{font-size:25px!important;}
+
+  .board-bet-slot{grid-column:14!important;grid-row:4 / span 2!important;border:1.8px solid var(--gold)!important;background:linear-gradient(180deg,#115c24,#0b4219)!important;display:flex!important;align-items:center!important;justify-content:center!important;min-width:0!important;overflow:hidden!important;}
+  .board-bet-slot .bet-circle{width:72px!important;height:72px!important;border-radius:50%!important;background:#8b3fc2!important;border:2px solid rgba(255,255,255,.5)!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;color:#fff!important;font-family:Arial,Helvetica,sans-serif!important;line-height:1!important;box-shadow:0 2px 8px rgba(0,0,0,.35)!important;}
+  .board-bet-slot .bet-circle span{font-size:12px!important;font-weight:800!important;text-transform:uppercase!important;margin-bottom:4px!important;}
+  .board-bet-slot .bet-circle strong{font-size:19px!important;font-weight:900!important;}
+
+  .chips-row{width:100%!important;margin:5px 0 0!important;gap:4px!important;flex-wrap:nowrap!important;justify-content:flex-start!important;}
+  .quick-control{height:34px!important;min-width:78px!important;padding:0 9px!important;border:1px solid rgba(255,255,255,.28)!important;border-radius:9px!important;color:#fff!important;font-family:Arial,Helvetica,sans-serif!important;font-size:12px!important;font-weight:800!important;cursor:pointer!important;}
+  .quick-clear{background:#a91515!important;}
+  .quick-double{background:#1f6f9f!important;}
+  .quick-lastbet{background:#6b4aa5!important;}
+  .quick-lastbet.active{background:#b27a19!important;outline:2px solid #f4d35e!important;}
+  .last-result-inline{height:34px!important;min-width:92px!important;padding:0 9px!important;margin-right:6px!important;border-radius:9px!important;white-space:nowrap!important;}
+  .chip-choice{min-width:42px!important;height:34px!important;padding:0 6px!important;border-radius:9px!important;font-size:12px!important;}
+  .undo-chip{min-width:34px!important;width:34px!important;padding:0!important;font-size:20px!important;}
+
+  .history-line{display:block!important;width:100%!important;margin-top:4px!important;}
+  .history-line #history.history{width:100%!important;justify-content:center!important;margin:0!important;gap:3px!important;flex-wrap:nowrap!important;overflow:hidden!important;}
+  .ball{width:27px!important;height:27px!important;min-width:27px!important;font-size:13px!important;}
+}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="controls">
+      <button class="undo mini-control" onclick="undoLast()">Undo</button>
+      <button class="reset mini-control" onclick="resetAll()">Reset</button>
+      <div class="pnl-mini">
+        <label class="pnl-mini-label">PnL
+          <input id="pnlCurrent" type="number" step="1" value="0" oninput="setCurrentPnlDirect()">
+        </label>
+        <button class="pnl-reset-dot" onclick="resetPnlOnly()" title="Reset PnL to zero" aria-label="Reset PnL to zero"></button>
+        <label class="pnl-mini-label" title="Loss since last win">Loss
+          <span class="pnl-readonly flat" id="pnlDelta">$0</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="board-wrap">
+    <div class="board" id="board"></div>
+  </div>
+
+
+  <div class="chips-row" id="chipsRow"><button class="quick-control quick-clear" id="quickClearBtn" onclick="clearBets()">Clear</button><button class="quick-control quick-double" id="quickDoubleBtn" onclick="doubleBets()">Double</button><button class="quick-control quick-lastbet" id="lastBetModeBtn" onclick="toggleLastBetMode()">Last Bet</button><div class="bet-stat last-result-inline">Last <strong id="lastBetResult">—</strong></div><button class="chip-choice" data-chip="1" onclick="selectChip(1)">$1</button><button class="chip-choice" data-chip="2" onclick="selectChip(2)">$2</button><button class="chip-choice" data-chip="5" onclick="selectChip(5)">$5</button><button class="chip-choice" data-chip="10" onclick="selectChip(10)">$10</button><button class="chip-choice" data-chip="20" onclick="selectChip(20)">$20</button><button class="chip-choice" data-chip="25" onclick="selectChip(25)">$25</button><button class="chip-choice" data-chip="50" onclick="selectChip(50)">$50</button><button class="chip-choice" data-chip="75" onclick="selectChip(75)">$75</button><button class="chip-choice" data-chip="100" onclick="selectChip(100)">$100</button><button class="chip-choice" data-chip="150" onclick="selectChip(150)">$150</button><button class="chip-choice" data-chip="200" onclick="selectChip(200)">$200</button><button class="chip-choice" data-chip="250" onclick="selectChip(250)">$250</button><button class="chip-choice" data-chip="300" onclick="selectChip(300)">$300</button><button class="chip-choice" data-chip="350" onclick="selectChip(350)">$350</button><button class="chip-choice" data-chip="400" onclick="selectChip(400)">$400</button><button class="chip-choice" data-chip="500" onclick="selectChip(500)">$500</button><button class="chip-choice undo-chip" onclick="undoLastBet()" title="Undo last bet" aria-label="Undo last bet">↶</button></div>
+
+  <div class="history-line"><div class="history" id="history"></div></div>
+</div>
+
+<script>
+const redSet = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+const topRow = [3,6,9,12,15,18,21,24,27,30,33,36];
+const midRow = [2,5,8,11,14,17,20,23,26,29,32,35];
+const botRow = [1,4,7,10,13,16,19,22,25,28,31,34];
+let history = [];
+let spinning = false;
+let pnlCurrent = Number(localStorage.getItem('roulette_pnl_current') || 0);
+let lossSinceWin = Number(localStorage.getItem('roulette_loss_since_win') || 0);
+let bets = JSON.parse(localStorage.getItem('roulette_bets_v2') || '{}');
+let selectedChip = Number(localStorage.getItem('roulette_selected_chip') || 1);
+let strategyActive = localStorage.getItem('roulette_strategy_v18_active')==='1';
+let strategyPending = false; // antes del primer spin: la base sigue el TOTAL apostado
+let strategyBase = Number(localStorage.getItem('roulette_strategy_v18_base') || 0);
+let strategyBlock = Math.max(0,Number(localStorage.getItem('roulette_strategy_v18_block') || 0));
+let strategyShot = Math.min(3,Math.max(1,Number(localStorage.getItem('roulette_strategy_v18_shot') || 1)));
+let strategyBalance = Number(localStorage.getItem('roulette_strategy_v18_balance') || 0);
+let strategyBlockBalance = Number(localStorage.getItem('roulette_strategy_v39_block_balance') || 0);
+let betPlacementHistory = JSON.parse(localStorage.getItem('roulette_bet_placement_history') || '[]');
+let lastBetAmount = Number(localStorage.getItem('roulette_last_bet_amount') || 0);
+let lastBetMode = false;
+
+function secureRandomInt(maxExclusive){
+  if(window.crypto && crypto.getRandomValues){
+    const maxUint=0x100000000;
+    const limit=maxUint-(maxUint%maxExclusive);
+    const a=new Uint32Array(1);
+    do{ crypto.getRandomValues(a); }while(a[0]>=limit);
+    return a[0]%maxExclusive;
+  }
+  return Math.floor(Math.random()*maxExclusive);
+}
+function showSpinCount(n){
+  const el=document.getElementById('spinValue'); if(!el)return;
+  el.textContent=n;
+  el.className='spin-value';
+}
+function spinRoulette(){
+  if(spinning)return;
+  spinning=true;
+  const result=secureRandomInt(37);
+  // v42 iPhone: resolver inmediatamente. Sin pausa/disabled de 180 ms,
+  // para que cada toque rápido sea aceptado.
+  settleBets(result);
+  addNumber(result);
+  showSpinCount(history.length);
+  spinning=false;
+}
+function formatSignedMoney(v){
+  const a=Math.abs(Math.round(v)).toLocaleString('es-CO');
+  return (v>0?'+':v<0?'-':'')+'$'+a;
+}
+function renderPnl(){
+  const curEl=document.getElementById('pnlCurrent'), deltaEl=document.getElementById('pnlDelta');
+  if(curEl && document.activeElement!==curEl)curEl.value=Math.round(pnlCurrent);
+  if(!deltaEl)return;
+  deltaEl.className='pnl-readonly '+(lossSinceWin>0?'loss':'flat');
+  deltaEl.textContent=formatMoney(lossSinceWin);
+}
+function setCurrentPnlDirect(){
+  const c=Number(document.getElementById('pnlCurrent')?.value);
+  if(Number.isFinite(c)){
+    pnlCurrent=c;
+    localStorage.setItem('roulette_pnl_current',String(pnlCurrent));
+  }
+  renderPnl();
+}
+function resetPnlOnly(){
+  pnlCurrent=0;
+  localStorage.setItem('roulette_pnl_current','0');
+  renderPnl();
+}
+function saveStrategy(){
+  localStorage.setItem('roulette_strategy_v18_active',strategyActive?'1':'0');
+  localStorage.setItem('roulette_strategy_v18_base',String(strategyBase||0));
+  localStorage.setItem('roulette_strategy_v18_block',String(strategyBlock||0));
+  localStorage.setItem('roulette_strategy_v18_shot',String(strategyShot||1));
+  localStorage.setItem('roulette_strategy_v18_balance',String(strategyBalance||0));
+  localStorage.setItem('roulette_strategy_v39_block_balance',String(strategyBlockBalance||0));
+}
+function strategyAmount(){
+  // Self-heal stale/corrupt persisted state so the Bet display cannot freeze.
+  if(strategyActive && (!(strategyBase>0) || strategyShot<1 || strategyShot>3 || strategyBlock<0 || !Number.isFinite(strategyBalance))){
+    strategyActive=false; strategyPending=false; strategyBase=0; strategyBlock=0; strategyShot=1; strategyBalance=0; strategyBlockBalance=0; saveStrategy();
+  }
+  if((!strategyActive && !strategyPending) || !(strategyBase>0)) return null;
+  const x=strategyBase*Math.pow(2,strategyBlock);
+  return strategyShot===3 ? x*2 : x;
+}
+function renderStrategy(){
+  const el=document.getElementById('progBet'); if(!el)return;
+  const a=strategyAmount(); el.textContent=a==null?'—':formatMoney(a);
+}
+function currentBetTotal(){
+  return Object.values(bets).reduce((sum,v)=>sum+(Number(v)||0),0);
+}
+function armStrategyFromCurrentBet(){
+  // IMPORTANTE: la base NO es la ficha seleccionada. Es el TOTAL real de la entrada inicial.
+  // Ej.: cuatro clics de $1 = base 4; una ficha de $5 = base 5.
+  if(strategyActive)return;
+  const total=currentBetTotal();
+  if(total>0){
+    strategyPending=true;
+    strategyBase=total;
+    strategyBlock=0;
+    strategyShot=1;
+    strategyBalance=0;
+    strategyBlockBalance=0;
+  }else{
+    strategyPending=false;
+    strategyBase=0;
+  }
+  renderStrategy();
+}
+function lockStrategyAtSpin(total){
+  if(strategyActive || !(total>0))return;
+  // Se congela la base justo al hacer el primer spin, usando todo lo apostado en esa entrada.
+  strategyBase=total;
+  strategyBlock=0;
+  strategyShot=1;
+  strategyBalance=0;
+  strategyBlockBalance=0;
+  strategyActive=true;
+  strategyPending=false;
+  saveStrategy();
+}
+function advanceStrategy(net,total){
+  if(!strategyActive || !(total>0)) return false;
+
+  // La campaña acumula el resultado neto. Cada bloque usa X, X, 2X,
+  // PERO cualquier victoria termina inmediatamente el bloque actual.
+  strategyBalance += net;
+  strategyBlockBalance += net;
+
+  // WIN en la 1a, 2a o 3a apuesta: parar el bloque y borrar fichas.
+  // Si ya recuperamos toda la campaña, la próxima entrada manual define una base nueva.
+  // Si aún seguimos negativos, conservamos el mismo nivel pero volvemos al primer X.
+  if(net > 0){
+    if(strategyBalance >= 0){
+      strategyActive=false;
+      strategyPending=false;
+      strategyBase=0;
+      strategyBlock=0;
+      strategyShot=1;
+      strategyBalance=0;
+      strategyBlockBalance=0;
+    }else{
+      strategyShot=1;
+      strategyBlockBalance=0;
+    }
+    saveStrategy();
+    renderStrategy();
+    return true;
+  }
+
+  // LOSS: avanzar dentro del bloque X, X, 2X.
+  if(strategyShot < 3){
+    strategyShot += 1;
+    saveStrategy();
+    renderStrategy();
+    return false;
+  }
+
+  // Se perdió también el tercer valor 2X: subir un nivel y limpiar el tablero.
+  strategyBlock += 1;
+  strategyShot=1;
+  strategyBlockBalance=0;
+  saveStrategy();
+  renderStrategy();
+  return true;
+}
+function betKey(type,id){ return type+':'+id; }
+function selectChip(v){
+  selectedChip=Number(v)||1;
+  localStorage.setItem('roulette_selected_chip',String(selectedChip));
+  renderChipSelector();
+  renderStrategy();
+  renderLastBetMode();
+}
+function renderChipSelector(){
+  document.querySelectorAll('.chip-choice').forEach(b=>b.classList.toggle('selected',Number(b.dataset.chip)===selectedChip));
+  const el=document.getElementById('selectedChip'); if(el)el.textContent=formatMoney(selectedChip);
+}
+function saveBetPlacementHistory(){
+  localStorage.setItem('roulette_bet_placement_history',JSON.stringify(betPlacementHistory));
+}
+function toggleLastBetMode(){
+  if(spinning)return;
+  lastBetMode=!lastBetMode;
+  renderLastBetMode();
+}
+function renderLastBetMode(){
+  const b=document.getElementById('lastBetModeBtn');
+  if(!b)return;
+  b.classList.toggle('active',lastBetMode);
+  b.textContent=lastBetMode?'Last Bet ✓':'Last Bet';
+}
+function placeLastBet(type,id){
+  if(spinning || !(lastBetAmount>0))return false;
+  const key=betKey(type,id);
+  bets[key]=Number(bets[key]||0)+lastBetAmount;
+  betPlacementHistory.push({key,amount:lastBetAmount});
+  localStorage.setItem('roulette_bets_v2',JSON.stringify(bets));
+  saveBetPlacementHistory();
+  if(!strategyActive) armStrategyFromCurrentBet();
+  lastBetMode=false;
+  renderLastBetMode();
+  renderBets();
+  return true;
+}
+function addBet(type,id,deltaSign=1){
+  if(spinning)return;
+  if(deltaSign>0 && lastBetMode){
+    if(placeLastBet(type,id)) return;
+    lastBetMode=false; renderLastBetMode();
+  }
+  const key=betKey(type,id);
+  const cur=Number(bets[key]||0);
+  if(deltaSign>0){
+    bets[key]=cur+selectedChip;
+    betPlacementHistory.push({key,amount:selectedChip});
+    // Last Bet remembers the COMPLETE amount most recently built on a betting cell,
+    // not merely the value of the last chip clicked. Example: $1+$1+$1+$1 => Last Bet = $4.
+    lastBetAmount=Number(bets[key]||0);
+    localStorage.setItem('roulette_last_bet_amount',String(lastBetAmount));
+  }else{
+    const remove=Math.min(selectedChip,cur);
+    const next=cur-remove;
+    if(next>0)bets[key]=next; else delete bets[key];
+    if(remove>0){
+      for(let i=betPlacementHistory.length-1;i>=0;i--){
+        if(betPlacementHistory[i].key===key){
+          betPlacementHistory.splice(i,1);
+          break;
+        }
+      }
+    }
+  }
+  localStorage.setItem('roulette_bets_v2',JSON.stringify(bets));
+  saveBetPlacementHistory();
+  if(!strategyActive) armStrategyFromCurrentBet();
+  renderBets();
+}
+function undoLastBet(){
+  if(spinning || !betPlacementHistory.length)return;
+  const last=betPlacementHistory.pop();
+  const cur=Number(bets[last.key]||0);
+  const next=Math.max(0,cur-Number(last.amount||0));
+  if(next>0)bets[last.key]=next; else delete bets[last.key];
+  localStorage.setItem('roulette_bets_v2',JSON.stringify(bets));
+  saveBetPlacementHistory();
+  if(!strategyActive) armStrategyFromCurrentBet();
+  renderBets();
+}
+function clearBets(){
+  bets={}; betPlacementHistory=[];
+  localStorage.setItem('roulette_bets_v2','{}');
+  saveBetPlacementHistory();
+  if(!strategyActive) armStrategyFromCurrentBet();
+  renderBets();
+}
+function doubleBets(){
+  if(spinning)return;
+  const current=Object.entries(bets).filter(([,amount])=>Number(amount)>0);
+  if(!current.length)return;
+  // Duplicar equivale a añadir una vez más cada apuesta actualmente colocada.
+  current.forEach(([key,amount])=>{
+    amount=Number(amount)||0;
+    bets[key]=amount*2;
+    betPlacementHistory.push({key,amount});
+    // Last Bet must remember the FINAL wager after Double, not the pre-double amount.
+    lastBetAmount=Number(bets[key]||0);
+  });
+  if(lastBetAmount>0)localStorage.setItem('roulette_last_bet_amount',String(lastBetAmount));
+  localStorage.setItem('roulette_bets_v2',JSON.stringify(bets));
+  saveBetPlacementHistory();
+  if(!strategyActive) armStrategyFromCurrentBet();
+  renderBets();
+}
+function betWins(type,id,n){
+  if(type==='num')return n===Number(id);
+  if(type==='dozen')return getDozen(n)===id;
+  if(type==='row')return getRow(n)===id;
+  if(n===0)return false;
+  if(type==='outside'){
+    if(id==='low')return n>=1&&n<=18;
+    if(id==='high')return n>=19&&n<=36;
+    if(id==='even')return n%2===0;
+    if(id==='odd')return n%2===1;
+    if(id==='red')return redSet.has(n);
+    if(id==='black')return !redSet.has(n);
+  }
+  return false;
+}
+function payoutMultiple(type){ return type==='num'?35:(type==='dozen'||type==='row'?2:1); }
+function settleBets(n){
+  let total=0, net=0;
+  Object.entries(bets).forEach(([key,amount])=>{
+    const [type,id]=key.split(':'); amount=Number(amount)||0; total+=amount;
+    net += betWins(type,id,n) ? amount*payoutMultiple(type) : -amount;
+  });
+  lockStrategyAtSpin(total);
+  pnlCurrent += net;
+  localStorage.setItem('roulette_pnl_current',String(pnlCurrent));
+  if(total>0){
+    if(net>0) lossSinceWin=0;
+    else if(net<0) lossSinceWin += Math.abs(net);
+    localStorage.setItem('roulette_loss_since_win',String(lossSinceWin));
+  }
+  const el=document.getElementById('lastBetResult');
+  if(el){el.textContent=total?formatSignedMoney(net):'Sin apuesta';el.style.color=net>0?'#6cff7a':net<0?'#ff6b6b':'#fff';}
+  renderPnl();
+  const blockFinished = advanceStrategy(net,total);
+  // Se borran al ganar en cualquier tiro, o al perder el tercer tiro 2X.
+  if(blockFinished) clearBets();
+}
+function renderBets(){
+  document.querySelectorAll('.bet-chip').forEach(e=>e.remove());
+  let total=0;
+  Object.entries(bets).forEach(([key,amount])=>{
+    amount=Number(amount)||0; total += amount;
+    const [type,id]=key.split(':');
+    let host=null;
+    if(type==='num')host=document.querySelector(`[data-bet="num:${id}"]`);
+    else host=document.querySelector(`[data-bet="${type}:${id}"]`);
+    if(host){
+      const c=document.createElement('div'); c.className='bet-chip'; c.textContent=formatMoney(amount); host.appendChild(c);
+    }
+  });
+  const el=document.getElementById('betTotal'); if(el)el.textContent=formatMoney(total);
+  renderChipSelector();
+}
+function makeBettable(el,type,id){
+  el.classList.add('bettable'); el.dataset.bet=betKey(type,id);
+  el.onclick=(ev)=>{ev.preventDefault();addBet(type,String(id),ev.shiftKey?-1:1);};
+  el.oncontextmenu=(ev)=>{ev.preventDefault();addBet(type,String(id),-1);};
+}
+function getDozen(n){ if(n>=1&&n<=12)return'D1'; if(n>=13&&n<=24)return'D2'; if(n>=25&&n<=36)return'D3'; return'0'; }
+function getRow(n){ if(n===0)return'0'; const m=n%3; return m===1?'F1':m===2?'F2':'F3'; }
+function colorClass(n){ if(n===0)return'green'; return redSet.has(n)?'red':'black'; }
+function bindReliableTap(el, fn){
+  if(!el) return;
+  el.onclick = null;
+  // v42: ejecutar al apoyar el dedo, no al levantarlo. Esto elimina la
+  // sensación de retraso en Safari iPhone y evita perder taps muy rápidos.
+  el.addEventListener('pointerdown', function(e){
+    if(e.pointerType==='mouse' && e.button!==0) return;
+    e.preventDefault();
+    fn();
+  }, {passive:false});
+}
+
+function buildBoard(){
+ const board=document.getElementById('board'); board.innerHTML='';
+ const spin=document.createElement('button'); spin.className='board-spin'; spin.id='spinBtn'; spin.type='button'; spin.innerHTML='<span class="spin-circle"><span class="spin-label">SPIN</span><span class="spin-value" id="spinValue">—</span></span>'; board.appendChild(spin); bindReliableTap(spin, spinRoulette);
+ const zero=document.createElement('div'); zero.className='cell num green zero'; zero.innerHTML='<div class="main">0</div><div class="small-count" id="num-0">0</div>'; makeBettable(zero,'num','0'); board.appendChild(zero);
+ function addNum(n,col,row){ const el=document.createElement('div'); el.className=`cell num ${colorClass(n)}`; el.style.gridColumn=col; el.style.gridRow=row; el.innerHTML=`<div class="main">${n}</div><div class="small-count" id="num-${n}">0</div>`; makeBettable(el,'num',String(n)); board.appendChild(el); }
+ topRow.forEach((n,i)=>addNum(n,i+2,1)); midRow.forEach((n,i)=>addNum(n,i+2,2)); botRow.forEach((n,i)=>addNum(n,i+2,3));
+ ['F3','F2','F1'].forEach((f,idx)=>{ const el=document.createElement('div'); el.className='cell green-zone'; el.id=`zone-${f}`; el.style.gridColumn=14; el.style.gridRow=idx+1; el.innerHTML=`<div class="zone-count" id="${f}">0</div>`; makeBettable(el,'row',f); board.appendChild(el); });
+ [['D1','2 / span 4'],['D2','6 / span 4'],['D3','10 / span 4']].forEach(([d,col])=>{ const el=document.createElement('div'); el.className='cell green-zone'; el.id=`zone-${d}`; el.style.gridColumn=col; el.style.gridRow=4; el.innerHTML=`<div class="zone-count" id="${d}">0</div>`; makeBettable(el,'dozen',d); board.appendChild(el); });
+ const outside=[['low','1-18','2 / span 2'],['even','EVEN','4 / span 2'],['red','red-dot','6 / span 2'],['black','black-dot','8 / span 2'],['odd','ODD','10 / span 2'],['high','19-36','12 / span 2']];
+ outside.forEach(([id,label,col])=>{ const el=document.createElement('div'); el.className='cell outside-zone'; el.id=`zone-${id}`; el.style.gridColumn=col; el.style.gridRow=5;
+  const symbol=(id==='red'||id==='black')?`<span class="outside-dot ${label}"></span>`:`${label}`;
+  el.innerHTML=`<div class="outside-symbol">${symbol}</div><div class="small-count" id="out-${id}">0</div>`; makeBettable(el,'outside',id); board.appendChild(el); });
+ const betSlot=document.createElement('div'); betSlot.className='board-bet-slot'; betSlot.innerHTML='<div class="bet-circle" title="Next bet"><span>Bet</span><strong id="progBet">—</strong></div>'; board.appendChild(betSlot);
+}
+function recalc(){
+ const numAbsence={}; for(let n=0;n<=36;n++)numAbsence[n]=0;
+ const zoneAbsence={D1:0,D2:0,D3:0,F1:0,F2:0,F3:0};
+ history.forEach(n=>{ for(let k in numAbsence)numAbsence[k]++; numAbsence[n]=0; const d=getDozen(n), f=getRow(n); ['D1','D2','D3'].forEach(k=>zoneAbsence[k]=(k===d)?0:zoneAbsence[k]+1); ['F1','F2','F3'].forEach(k=>zoneAbsence[k]=(k===f)?0:zoneAbsence[k]+1); });
+ return {numAbsence, zoneAbsence};
+}
+function absenceFor(predicate){ let c=0; for(let i=history.length-1;i>=0;i--){ const n=history[i]; if(n===0){c++; continue;} if(predicate(n)) break; c++; } return c; }
+function formatMoney(v){ return Number.isFinite(v)?'$'+Math.round(v).toLocaleString('es-CO'):'—'; }
+
+function render(){
+ const {numAbsence, zoneAbsence}=recalc(); const maxAbsence=Math.max(...Object.values(numAbsence));
+ for(let n=0;n<=36;n++){ const el=document.getElementById(`num-${n}`); if(el){ el.textContent=numAbsence[n]; el.classList.toggle('leader', maxAbsence>0&&numAbsence[n]===maxAbsence); } }
+ ['D1','D2','D3','F1','F2','F3'].forEach(k=>{ const ce=document.getElementById(k); if(ce)ce.textContent=zoneAbsence[k]; });
+ const outsideCounts={low:absenceFor(n=>n>=1&&n<=18),even:absenceFor(n=>n!==0&&n%2===0),red:absenceFor(n=>redSet.has(n)),black:absenceFor(n=>n!==0&&!redSet.has(n)),odd:absenceFor(n=>n!==0&&n%2===1),high:absenceFor(n=>n>=19&&n<=36)};
+ Object.entries(outsideCounts).forEach(([id,val])=>{ const el=document.getElementById('out-'+id); if(el)el.textContent=val; const zone=document.getElementById('zone-'+id); if(zone)zone.classList.toggle('alert',val>=12); });
+ ['D1','D2','D3'].forEach(id=>{ const zone=document.getElementById('zone-'+id); if(zone)zone.classList.toggle('alert',zoneAbsence[id]>=13); });
+ const zeroCell=document.querySelector('[data-bet="num:0"]'); if(zeroCell)zeroCell.classList.toggle('alert',numAbsence[0]>=150);
+ renderStrategy();
+ const historyEl=document.getElementById('history'); historyEl.innerHTML=''; history.slice(-35).reverse().forEach(n=>{ const b=document.createElement('div'); b.className=`ball ${colorClass(n)}`; b.textContent=n; historyEl.appendChild(b); });
+}
+function saveData(){ localStorage.setItem('roulette_history', JSON.stringify(history)); }
+function loadData(){ const data=localStorage.getItem('roulette_history'); if(data)history=JSON.parse(data); }
+function addNumber(n){ history.push(n); saveData(); render(); }
+function undoLast(){ if(history.length){ history.pop(); saveData(); render(); showSpinCount(history.length||'—'); } }
+function resetAll(){ history=[]; saveData(); showSpinCount('—'); render(); }
+loadData();
+// Migración v21: versiones anteriores podían dejar la estrategia activa en el
+// bloque inicial después de haber recuperado. Si no hay apuestas pendientes y
+// el saldo interno está en cero, la dejamos lista para que la siguiente entrada
+// manual escoja una base nueva.
+if(strategyActive && strategyBalance===0 && strategyBlock===0 && strategyShot===1 && currentBetTotal()===0){
+  strategyActive=false; strategyPending=false; strategyBase=0; saveStrategy();
+}
+buildBoard(); renderPnl(); render(); renderBets(); renderStrategy(); renderLastBetMode(); showSpinCount(history.length||'—');
+// v41: reliable tap targets for iPhone quick controls.
+bindReliableTap(document.getElementById('quickClearBtn'), clearBets);
+bindReliableTap(document.getElementById('quickDoubleBtn'), doubleBets);
+bindReliableTap(document.getElementById('lastBetModeBtn'), toggleLastBetMode);
+
+// v32 visual-only click acknowledgement: only Clear, Double, Last Bet and Spin.
+document.addEventListener('pointerdown', function(e){
+  const t=e.target.closest('#quickClearBtn,#quickDoubleBtn,#lastBetModeBtn,#spinBtn');
+  if(!t) return;
+  t.classList.remove('click-flash');
+  void t.offsetWidth;
+  t.classList.add('click-flash');
+  setTimeout(()=>t.classList.remove('click-flash'),170);
+}, true);
+
+</script>
+</body>
+</html>
