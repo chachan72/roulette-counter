@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Roulette Counter</title>
+<title>Roulette Counter v44</title>
 <style>
   :root{
     --felt1:#0f5a22;
@@ -770,6 +770,17 @@
 }
 </style>
 
+
+<style>
+/* v43 — iPhone 13 mini / small landscape screens: scale the complete UI only. */
+@media (max-width:850px) and (orientation:landscape){
+  body{zoom:.52!important;overflow-x:hidden!important;}
+  .wrap{width:1450px!important;max-width:none!important;margin:0!important;padding-left:18px!important;padding-right:18px!important;}
+  /* v44: keep rapid taps on the page; don't let Safari interpret them as gestures. */
+  #spinBtn,#quickClearBtn,#quickDoubleBtn,#lastBetModeBtn{touch-action:none!important;}
+}
+</style>
+
 </head>
 <body>
 <div class="wrap">
@@ -1205,15 +1216,9 @@ bindReliableTap(document.getElementById('quickClearBtn'), clearBets);
 bindReliableTap(document.getElementById('quickDoubleBtn'), doubleBets);
 bindReliableTap(document.getElementById('lastBetModeBtn'), toggleLastBetMode);
 
-// v32 visual-only click acknowledgement: only Clear, Double, Last Bet and Spin.
-document.addEventListener('pointerdown', function(e){
-  const t=e.target.closest('#quickClearBtn,#quickDoubleBtn,#lastBetModeBtn,#spinBtn');
-  if(!t) return;
-  t.classList.remove('click-flash');
-  void t.offsetWidth;
-  t.classList.add('click-flash');
-  setTimeout(()=>t.classList.remove('click-flash'),170);
-}, true);
+// v44 iPhone: no JS click animation. The old feedback forced a synchronous
+// layout (offsetWidth) on every tap, which can make rapid taps feel sticky in Safari.
+// CSS :active above still gives a subtle visual acknowledgement at zero JS cost.
 
 </script>
 </body>
