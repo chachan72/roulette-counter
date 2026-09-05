@@ -539,6 +539,21 @@
   100% { filter:brightness(1); box-shadow:none; }
 }
 
+
+/* v42 iPhone fast-touch: immediate controls without 180ms spin lock */
+#spinBtn, #quickClearBtn, #quickDoubleBtn, #lastBetModeBtn {
+  -webkit-tap-highlight-color: transparent !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+/* v41 iPhone touch reliability: no layout/strategy changes */
+#spinBtn, #quickClearBtn, #quickDoubleBtn, #lastBetModeBtn {
+  touch-action: manipulation !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
 </style>
 
 <style>
@@ -755,6 +770,15 @@
 }
 </style>
 
+
+<style>
+/* v43 — iPhone 13 mini / small landscape screens: scale the complete UI only. */
+@media (max-width:850px) and (orientation:landscape){
+  body{zoom:.52!important;overflow-x:hidden!important;}
+  .wrap{width:1450px!important;max-width:none!important;margin:0!important;padding-left:18px!important;padding-right:18px!important;}
+}
+</style>
+
 </head>
 <body>
 <div class="wrap">
@@ -825,16 +849,13 @@ function showSpinCount(n){
 function spinRoulette(){
   if(spinning)return;
   spinning=true;
-  const btn=document.getElementById('spinBtn'); if(btn)btn.disabled=true;
   const result=secureRandomInt(37);
-  // Pequeña pausa visual, sin rueda ni animación.
-  setTimeout(()=>{
-    settleBets(result);
-    addNumber(result);
-    showSpinCount(history.length);
-    spinning=false;
-    if(btn)btn.disabled=false;
-  },180);
+  // v42 iPhone: resolver inmediatamente. Sin pausa/disabled de 180 ms,
+  // para que cada toque rápido sea aceptado.
+  settleBets(result);
+  addNumber(result);
+  showSpinCount(history.length);
+  spinning=false;
 }
 function formatSignedMoney(v){
   const a=Math.abs(Math.round(v)).toLocaleString('es-CO');
@@ -1128,9 +1149,21 @@ function makeBettable(el,type,id){
 function getDozen(n){ if(n>=1&&n<=12)return'D1'; if(n>=13&&n<=24)return'D2'; if(n>=25&&n<=36)return'D3'; return'0'; }
 function getRow(n){ if(n===0)return'0'; const m=n%3; return m===1?'F1':m===2?'F2':'F3'; }
 function colorClass(n){ if(n===0)return'green'; return redSet.has(n)?'red':'black'; }
+function bindReliableTap(el, fn){
+  if(!el) return;
+  el.onclick = null;
+  // v42: ejecutar al apoyar el dedo, no al levantarlo. Esto elimina la
+  // sensación de retraso en Safari iPhone y evita perder taps muy rápidos.
+  el.addEventListener('pointerdown', function(e){
+    if(e.pointerType==='mouse' && e.button!==0) return;
+    e.preventDefault();
+    fn();
+  }, {passive:false});
+}
+
 function buildBoard(){
  const board=document.getElementById('board'); board.innerHTML='';
- const spin=document.createElement('button'); spin.className='board-spin'; spin.id='spinBtn'; spin.type='button'; spin.onclick=spinRoulette; spin.innerHTML='<span class="spin-circle"><span class="spin-label">SPIN</span><span class="spin-value" id="spinValue">—</span></span>'; board.appendChild(spin);
+ const spin=document.createElement('button'); spin.className='board-spin'; spin.id='spinBtn'; spin.type='button'; spin.innerHTML='<span class="spin-circle"><span class="spin-label">SPIN</span><span class="spin-value" id="spinValue">—</span></span>'; board.appendChild(spin); bindReliableTap(spin, spinRoulette);
  const zero=document.createElement('div'); zero.className='cell num green zero'; zero.innerHTML='<div class="main">0</div><div class="small-count" id="num-0">0</div>'; makeBettable(zero,'num','0'); board.appendChild(zero);
  function addNum(n,col,row){ const el=document.createElement('div'); el.className=`cell num ${colorClass(n)}`; el.style.gridColumn=col; el.style.gridRow=row; el.innerHTML=`<div class="main">${n}</div><div class="small-count" id="num-${n}">0</div>`; makeBettable(el,'num',String(n)); board.appendChild(el); }
  topRow.forEach((n,i)=>addNum(n,i+2,1)); midRow.forEach((n,i)=>addNum(n,i+2,2)); botRow.forEach((n,i)=>addNum(n,i+2,3));
@@ -1176,9 +1209,13 @@ if(strategyActive && strategyBalance===0 && strategyBlock===0 && strategyShot===
   strategyActive=false; strategyPending=false; strategyBase=0; saveStrategy();
 }
 buildBoard(); renderPnl(); render(); renderBets(); renderStrategy(); renderLastBetMode(); showSpinCount(history.length||'—');
+// v41: reliable tap targets for iPhone quick controls.
+bindReliableTap(document.getElementById('quickClearBtn'), clearBets);
+bindReliableTap(document.getElementById('quickDoubleBtn'), doubleBets);
+bindReliableTap(document.getElementById('lastBetModeBtn'), toggleLastBetMode);
 
 // v32 visual-only click acknowledgement: only Clear, Double, Last Bet and Spin.
-document.addEventListener('click', function(e){
+document.addEventListener('pointerdown', function(e){
   const t=e.target.closest('#quickClearBtn,#quickDoubleBtn,#lastBetModeBtn,#spinBtn');
   if(!t) return;
   t.classList.remove('click-flash');
